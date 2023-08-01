@@ -3,6 +3,7 @@ package org.langium.antlr;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.antlr.runtime.tree.Tree;
 import org.antlr.v4.tool.Grammar;
 import org.antlr.v4.tool.Rule;
 import org.antlr.v4.tool.ast.AltAST;
@@ -88,7 +89,10 @@ public class LangiumGeneratingVisitor implements GrammarASTVisitor {
     String start = isStartRule ? "entry " : "";
 
     if (finalRuleName != null) {
-      String terminal = node.isLexerRule() ? "terminal " : "";
+      //TODO hidden is not correct (skip or hidden channel)
+      String hidden = hasModifier(node, "hidden") ? "hidden " : "";
+      String fragment = hasModifier(node, "fragment") ? "fragment " : "";
+      String terminal = node.isLexerRule() ? hidden+"terminal "+fragment : "";
       String returns = node.isLexerRule() ? " returns string" : "";
       result.append(start + terminal + finalRuleName + returns + ": ");
       visitChildren(node);
@@ -96,6 +100,20 @@ public class LangiumGeneratingVisitor implements GrammarASTVisitor {
     }
 
     return null;
+  }
+
+  private boolean hasModifier(RuleAST node, String modifier) {
+    if(!node.isLexerRule()) {
+      return false;
+    }
+    Tree ruleModifiers = node.getChild(1);
+    for(int index=0; index<ruleModifiers.getChildCount(); index++) {
+      Tree ruleModifier = ruleModifiers.getChild(index);
+      if(ruleModifier.getText().toLowerCase().equals(modifier)) {
+        return true;
+      }
+    }
+    return false;
   }
 
   @Override
