@@ -33,10 +33,11 @@ public class App extends Tool {
     }
 
     public String toLangium(Grammar grammar) {
-        LangiumGeneratingVisitor visitor = new LangiumGeneratingVisitor();
+        LangiumGeneratingVisitor visitor = new LangiumGeneratingVisitor(grammar);
+        grammar.ast.visit(visitor);
+        grammar.implicitLexer.ast.visit(visitor);
         return "grammar "+grammar.name + LangiumGeneratingVisitor.NL + LangiumGeneratingVisitor.NL
-            + grammar.ast.visit(visitor).toString()
-            + grammar.implicitLexer.ast.visit(visitor).toString()    
+            + visitor.toString()    
             ;
     }
 }
