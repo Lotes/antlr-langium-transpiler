@@ -3,6 +3,7 @@ package org.langium.antlr;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.antlr.runtime.tree.CommonTree;
 import org.antlr.runtime.tree.Tree;
 import org.antlr.v4.tool.Grammar;
 import org.antlr.v4.tool.Rule;
@@ -34,8 +35,27 @@ public class LangiumGeneratingVisitor implements GrammarASTVisitor {
     this.grammar = grammar;
   }
 
+  private int indent = 0;
+  private void printIndent() {
+    int count = indent;
+    while(count-- > 0) {
+      System.out.print('\t');
+    }
+  }
+  private void begin(CommonTree node) {
+    printIndent();
+    System.out.println("<"+node.getClass().getSimpleName()+" text=\""+node.getText().replaceAll("\"", "&quote;")+"\">");
+    indent++;
+  }
+  private void end(CommonTree node) {
+    indent--;
+    printIndent();
+    System.out.println("</"+node.getClass().getSimpleName()+">");
+  }
+
   @Override
   public Object visit(GrammarAST node) {
+    begin(node);
     if(node.getChildCount() == 0 ) {
       String text = node.toString();
       if(text.startsWith("[")) {
@@ -46,12 +66,15 @@ public class LangiumGeneratingVisitor implements GrammarASTVisitor {
     } else {
       visitChildren(node);
     }
+    end(node);
     return null;
   }
 
   @Override
   public Object visit(GrammarRootAST node) {
+    begin(node);
     visitChildren(node);
+    end(node);
     return null;
   }
 
@@ -75,7 +98,9 @@ public class LangiumGeneratingVisitor implements GrammarASTVisitor {
 
   @Override
   public Object visit(RuleAST node) {
+    begin(node);
     if (node.getRuleName().startsWith("T__")) {
+      end(node);
       return null;
     }
 
@@ -98,7 +123,7 @@ public class LangiumGeneratingVisitor implements GrammarASTVisitor {
       visitChildren(node);
       result.append(";" + NL);
     }
-
+    end(node);
     return null;
   }
 
@@ -118,6 +143,7 @@ public class LangiumGeneratingVisitor implements GrammarASTVisitor {
 
   @Override
   public Object visit(BlockAST node) {
+    begin(node);
     if(node.getChildCount() == 1 || node.parent instanceof RuleAST) {
       visitChildren(node, " | ");
     } else {
@@ -125,11 +151,13 @@ public class LangiumGeneratingVisitor implements GrammarASTVisitor {
       visitChildren(node, " | ");
       result.append(")");
     }
+    end(node);
     return null;
   }
 
   @Override
   public Object visit(OptionalBlockAST node) {
+    begin(node);
     if(node.getChildCount() == 1) {
       visitChildren(node);
       result.append("?");
@@ -138,12 +166,14 @@ public class LangiumGeneratingVisitor implements GrammarASTVisitor {
       visitChildren(node);
       result.append(")?");
     }
+    end(node);
     return null;
   }
 
   @Override
   public Object visit(PlusBlockAST node) {
-     if(node.getChildCount() == 1) {
+    begin(node);
+    if(node.getChildCount() == 1) {
       visitChildren(node);
       result.append("+");
     } else {
@@ -151,11 +181,13 @@ public class LangiumGeneratingVisitor implements GrammarASTVisitor {
       visitChildren(node);
       result.append(")+");
     }
+    end(node);
     return null;
   }
 
   @Override
   public Object visit(StarBlockAST node) {
+    begin(node);
     if(node.getChildCount() == 1) {
       visitChildren(node);
       String text = result.toString();
@@ -169,53 +201,67 @@ public class LangiumGeneratingVisitor implements GrammarASTVisitor {
       visitChildren(node);
       result.append(")*");
     }
+    end(node);
     return null;
   }
 
   @Override
   public Object visit(AltAST node) {
-   if(node.getChildCount() == 1 || node.parent instanceof RuleAST || (node.parent instanceof BlockAST && node.parent.parent instanceof RuleAST)) {
+    begin(node);
+    if(node.getChildCount() == 1 || node.parent instanceof RuleAST || (node.parent instanceof BlockAST && node.parent.parent instanceof RuleAST)) {
       visitChildren(node, " ");
     } else {
       result.append("(");
       visitChildren(node, " ");
       result.append(")");
     }
+    end(node);
     return null;
   }
 
   @Override
   public Object visit(NotAST node) {
+    begin(node);
     boolean hasOnlyOneChild = node.getChildCount() == 1;
     result.append("!");
     if(!hasOnlyOneChild) {result.append("(");}
     visitChildren(node);
     if(!hasOnlyOneChild) {result.append(")");}
+    end(node);
     return "/* TODO not */";
   }
 
   @Override
   public Object visit(PredAST node) {
+    begin(node);
     visitChildren(node);
+    end(node);
     return null;
   }
 
   @Override
   public Object visit(RangeAST node) {
+    begin(node);
     visitChildren(node);
+    end(node);
     return null;
   }
 
   @Override
   public Object visit(SetAST node) {
+    begin(node);
     visitChildren(node);
+    end(node);
     return null;
   }
 
   @Override
-  public Object visit(RuleRefAST node) {
+  public Object visit(RuleRefAST node) 
+  {
+    begin(node);
     String newName = getParserRuleName(node.getText());
     result.append(newName);
+    end(node);
     return null;
   }
 
@@ -257,10 +303,12 @@ public class LangiumGeneratingVisitor implements GrammarASTVisitor {
 
   @Override
   public Object visit(TerminalAST node) {
+    begin(node);
     String newName = getLexerRuleName(node.getText());
     if (newName != null) {
       result.append(newName);
     }
+    end(node);
     return null;
   }
 

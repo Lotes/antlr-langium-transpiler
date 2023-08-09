@@ -5,7 +5,7 @@ import java.io.IOException;
 import java.io.PrintWriter;
 
 import org.antlr.v4.Tool;
-import org.antlr.v4.tool.Grammar;
+import org.langium.antlr.model.Grammar;
 
 public class App extends Tool {
     public static void main(String[] args) {
@@ -20,8 +20,8 @@ public class App extends Tool {
         String antlrFileName = args[0];
         String langiumFileName = args[1];
         try {
-            Grammar grammar = app.loadGrammar(antlrFileName);
-            String content = app.toLangium(grammar);
+            org.antlr.v4.tool.Grammar grammar = app.loadGrammar(antlrFileName);
+            String content = app.toLangium2(grammar);
             FileWriter fileWriter = new FileWriter(langiumFileName);
             PrintWriter printWriter = new PrintWriter(fileWriter);
             printWriter.print(content);
@@ -32,12 +32,19 @@ public class App extends Tool {
         }
     }
 
-    public String toLangium(Grammar grammar) {
+    public String toLangium(org.antlr.v4.tool.Grammar grammar) {
         LangiumGeneratingVisitor visitor = new LangiumGeneratingVisitor(grammar);
         grammar.ast.visit(visitor);
         grammar.implicitLexer.ast.visit(visitor);
         return "grammar "+grammar.name + LangiumGeneratingVisitor.NL + LangiumGeneratingVisitor.NL
             + visitor.toString()    
             ;
+    }
+
+     public String toLangium2(org.antlr.v4.tool.Grammar grammar) {
+        LangiumGeneratingVisitor2 visitor = new LangiumGeneratingVisitor2();
+        Grammar lexer = visitor.generate(grammar.implicitLexer.ast, null);
+        Grammar parser = visitor.generate(grammar.ast, new Grammar[] { lexer });
+        return lexer.print(0)+"----------"+parser.print(0);
     }
 }
