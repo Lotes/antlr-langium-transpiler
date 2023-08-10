@@ -18,11 +18,24 @@ public class AppTest
             var entry = Files.readString(entryFile.toPath());
             File entryGrammar = new File(grammarDirectory, entry);
             File targetFolder = new File(grammarDirectory, "target");
+            clearDirectory(targetFolder);
             targetFolder.mkdir();
             App.main(new String[] {
                 entryGrammar.getAbsolutePath(),
                 targetFolder.getAbsolutePath()
             });
+        }
+    }
+
+    private void clearDirectory(File grammarDirectory) {
+        if(!grammarDirectory.exists()) {
+            return;
+        }
+        for (File file : grammarDirectory.listFiles()) {
+            if (file.isDirectory()) {
+                clearDirectory(file);
+            }
+            file.delete();
         }
     }
 }

@@ -48,8 +48,8 @@ public class App extends Tool {
         }
         result.add(new GrammarFile(grammar.name+".parser.xml", xmlGenerator.generate(grammar.ast)));
         try {
-            Grammar parser = visitor.generate(grammar.ast, grammars);
-            result.add(new GrammarFile(parser.name+".langium", parser.print(0)));    
+            Grammar parserGrammar = visitor.generate(grammar.ast, grammars);
+            result.add(new GrammarFile(parserGrammar.name+".langium", parserGrammar.print(0)));    
         } catch (Exception e) {
             result.add(new GrammarFile(grammar.name+".parser.error", e.getMessage()+"\n"+e.getStackTrace()));
         }

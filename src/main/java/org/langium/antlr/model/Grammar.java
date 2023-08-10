@@ -1,18 +1,32 @@
 package org.langium.antlr.model;
 
+import java.util.Collection;
+
 public class Grammar implements Printable {
     public final String name;
     public final Iterable<Rule> rules;
+    public final RuleKind grammarKind;
+    public final Collection<Grammar> imports;
 
-    public Grammar(String name, Iterable<Rule> rules) {
+    public Grammar(String name, Iterable<Rule> rules, RuleKind grammarKind, Collection<Grammar> imports) {
         this.name = name;
         this.rules = rules;
+        this.grammarKind = grammarKind;
+        this.imports = imports;
     }
 
     @Override
     public String print(int indent) {
         StringBuilder sb = new StringBuilder();
-        sb.append("grammar ").append(name).append(";\n\n");
+        if (grammarKind == RuleKind.Parser) {
+            sb.append("grammar ").append(name).append("\n\n");
+        }
+        if (!imports.isEmpty()) {
+            for (Grammar string : imports) {
+                sb.append("import \"").append(string.name).append("\"\n");
+            }
+            sb.append("\n");
+        }
         for (Rule rule : rules) {
             sb.append(rule.print(indent)).append("\n\n");
         }

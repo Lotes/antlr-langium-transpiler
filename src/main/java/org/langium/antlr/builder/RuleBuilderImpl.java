@@ -1,6 +1,5 @@
 package org.langium.antlr.builder;
 
-import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -40,18 +39,8 @@ public class RuleBuilderImpl implements RuleBuilder {
     }
 
     @Override
-    public RuleBuilder modifiers(Collection<RuleModifier> modifiers) {
-        this.modifiers.addAll(modifiers);
-        return this;
-    }
-
-    @Override
-    public RuleBuilder setHidden(boolean hidden) {
-        if(hidden) {
-            this.modifiers.add(RuleModifier.hidden);
-        } else {
-            this.modifiers.remove(RuleModifier.hidden);
-        }
+    public RuleBuilder setModifier(RuleModifier modifier) {
+        this.modifiers.add(modifier);
         return this;
     }
 

@@ -9,6 +9,6 @@ public class RegexRuleExpression extends RuleExpression {
 
     @Override
     public String print(int indent) {
-        return pattern;
+        return "/"+pattern+"/";
     }
 }
