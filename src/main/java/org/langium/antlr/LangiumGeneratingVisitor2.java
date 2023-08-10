@@ -29,7 +29,15 @@ public class LangiumGeneratingVisitor2 {
     Iterable<RuleAST> rules = this.expectChildrenOfType(rulesNode);
     for (RuleAST rule : rules) {
       var ruleName = expectChildName(rule, 0);
-
+      switch(rule.getChildCount()) {
+        case 2:
+          break;
+        case 3:
+          break;
+        default:
+          throw new IllegalStateException("Unexpected rule child count: " + rule.getChildCount());
+      }
+      expectChild(rule, 1);
 
       builder.beginRule(isLexer?RuleKind.Lexer:RuleKind.Parser)
         .name(ruleName)

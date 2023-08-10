@@ -1,0 +1,349 @@
+<GrammarRootAST text="COMBINED_GRAMMAR">
+	<GrammarAST text="JSON"/>
+	<GrammarAST text="RULES">
+		<RuleAST text="RULE">
+			<GrammarAST text="json"/>
+			<BlockAST text="BLOCK">
+				<AltAST text="ALT">
+					<RuleRefAST text="value"/>
+					<TerminalAST text="EOF"/>
+				</AltAST>
+			</BlockAST>
+		</RuleAST>
+		<RuleAST text="RULE">
+			<GrammarAST text="obj"/>
+			<BlockAST text="BLOCK">
+				<AltAST text="ALT">
+					<TerminalAST text="'{'"/>
+					<RuleRefAST text="pair"/>
+					<StarBlockAST text="*">
+						<BlockAST text="BLOCK">
+							<AltAST text="ALT">
+								<TerminalAST text="','"/>
+								<RuleRefAST text="pair"/>
+							</AltAST>
+						</BlockAST>
+					</StarBlockAST>
+					<TerminalAST text="'}'"/>
+				</AltAST>
+				<AltAST text="ALT">
+					<TerminalAST text="'{'"/>
+					<TerminalAST text="'}'"/>
+				</AltAST>
+			</BlockAST>
+		</RuleAST>
+		<RuleAST text="RULE">
+			<GrammarAST text="pair"/>
+			<BlockAST text="BLOCK">
+				<AltAST text="ALT">
+					<TerminalAST text="STRING"/>
+					<TerminalAST text="':'"/>
+					<RuleRefAST text="value"/>
+				</AltAST>
+			</BlockAST>
+		</RuleAST>
+		<RuleAST text="RULE">
+			<GrammarAST text="arr"/>
+			<BlockAST text="BLOCK">
+				<AltAST text="ALT">
+					<TerminalAST text="'['"/>
+					<RuleRefAST text="value"/>
+					<StarBlockAST text="*">
+						<BlockAST text="BLOCK">
+							<AltAST text="ALT">
+								<TerminalAST text="','"/>
+								<RuleRefAST text="value"/>
+							</AltAST>
+						</BlockAST>
+					</StarBlockAST>
+					<TerminalAST text="']'"/>
+				</AltAST>
+				<AltAST text="ALT">
+					<TerminalAST text="'['"/>
+					<TerminalAST text="']'"/>
+				</AltAST>
+			</BlockAST>
+		</RuleAST>
+		<RuleAST text="RULE">
+			<GrammarAST text="value"/>
+			<BlockAST text="BLOCK">
+				<AltAST text="ALT">
+					<TerminalAST text="STRING"/>
+				</AltAST>
+				<AltAST text="ALT">
+					<TerminalAST text="NUMBER"/>
+				</AltAST>
+				<AltAST text="ALT">
+					<RuleRefAST text="obj"/>
+				</AltAST>
+				<AltAST text="ALT">
+					<RuleRefAST text="arr"/>
+				</AltAST>
+				<AltAST text="ALT">
+					<TerminalAST text="'true'"/>
+				</AltAST>
+				<AltAST text="ALT">
+					<TerminalAST text="'false'"/>
+				</AltAST>
+				<AltAST text="ALT">
+					<TerminalAST text="'null'"/>
+				</AltAST>
+			</BlockAST>
+		</RuleAST>
+	</GrammarAST>
+</GrammarRootAST>
+<GrammarRootAST text="LEXER_GRAMMAR">
+	<GrammarAST text="JSONLexer"/>
+	<GrammarAST text="RULES">
+		<RuleAST text="RULE">
+			<TerminalAST text="T__0"/>
+			<BlockAST text="BLOCK">
+				<AltAST text="ALT">
+					<TerminalAST text="'{'"/>
+				</AltAST>
+			</BlockAST>
+		</RuleAST>
+		<RuleAST text="RULE">
+			<TerminalAST text="T__1"/>
+			<BlockAST text="BLOCK">
+				<AltAST text="ALT">
+					<TerminalAST text="','"/>
+				</AltAST>
+			</BlockAST>
+		</RuleAST>
+		<RuleAST text="RULE">
+			<TerminalAST text="T__2"/>
+			<BlockAST text="BLOCK">
+				<AltAST text="ALT">
+					<TerminalAST text="'}'"/>
+				</AltAST>
+			</BlockAST>
+		</RuleAST>
+		<RuleAST text="RULE">
+			<TerminalAST text="T__3"/>
+			<BlockAST text="BLOCK">
+				<AltAST text="ALT">
+					<TerminalAST text="':'"/>
+				</AltAST>
+			</BlockAST>
+		</RuleAST>
+		<RuleAST text="RULE">
+			<TerminalAST text="T__4"/>
+			<BlockAST text="BLOCK">
+				<AltAST text="ALT">
+					<TerminalAST text="'['"/>
+				</AltAST>
+			</BlockAST>
+		</RuleAST>
+		<RuleAST text="RULE">
+			<TerminalAST text="T__5"/>
+			<BlockAST text="BLOCK">
+				<AltAST text="ALT">
+					<TerminalAST text="']'"/>
+				</AltAST>
+			</BlockAST>
+		</RuleAST>
+		<RuleAST text="RULE">
+			<TerminalAST text="T__6"/>
+			<BlockAST text="BLOCK">
+				<AltAST text="ALT">
+					<TerminalAST text="'true'"/>
+				</AltAST>
+			</BlockAST>
+		</RuleAST>
+		<RuleAST text="RULE">
+			<TerminalAST text="T__7"/>
+			<BlockAST text="BLOCK">
+				<AltAST text="ALT">
+					<TerminalAST text="'false'"/>
+				</AltAST>
+			</BlockAST>
+		</RuleAST>
+		<RuleAST text="RULE">
+			<TerminalAST text="T__8"/>
+			<BlockAST text="BLOCK">
+				<AltAST text="ALT">
+					<TerminalAST text="'null'"/>
+				</AltAST>
+			</BlockAST>
+		</RuleAST>
+		<RuleAST text="RULE">
+			<GrammarAST text="STRING"/>
+			<BlockAST text="BLOCK">
+				<AltAST text="ALT">
+					<TerminalAST text="'"'"/>
+					<StarBlockAST text="*">
+						<BlockAST text="BLOCK">
+							<AltAST text="ALT">
+								<TerminalAST text="ESC"/>
+							</AltAST>
+							<AltAST text="ALT">
+								<TerminalAST text="SAFECODEPOINT"/>
+							</AltAST>
+						</BlockAST>
+					</StarBlockAST>
+					<TerminalAST text="'"'"/>
+				</AltAST>
+			</BlockAST>
+		</RuleAST>
+		<RuleAST text="RULE">
+			<GrammarAST text="ESC"/>
+			<GrammarAST text="RULEMODIFIERS">
+				<GrammarAST text="fragment"/>
+			</GrammarAST>
+			<BlockAST text="BLOCK">
+				<AltAST text="ALT">
+					<TerminalAST text="'\\'"/>
+					<BlockAST text="BLOCK">
+						<AltAST text="ALT">
+							<GrammarAST text="["\\/bfnrt]"/>
+						</AltAST>
+						<AltAST text="ALT">
+							<TerminalAST text="UNICODE"/>
+						</AltAST>
+					</BlockAST>
+				</AltAST>
+			</BlockAST>
+		</RuleAST>
+		<RuleAST text="RULE">
+			<GrammarAST text="UNICODE"/>
+			<GrammarAST text="RULEMODIFIERS">
+				<GrammarAST text="fragment"/>
+			</GrammarAST>
+			<BlockAST text="BLOCK">
+				<AltAST text="ALT">
+					<TerminalAST text="'u'"/>
+					<TerminalAST text="HEX"/>
+					<TerminalAST text="HEX"/>
+					<TerminalAST text="HEX"/>
+					<TerminalAST text="HEX"/>
+				</AltAST>
+			</BlockAST>
+		</RuleAST>
+		<RuleAST text="RULE">
+			<GrammarAST text="HEX"/>
+			<GrammarAST text="RULEMODIFIERS">
+				<GrammarAST text="fragment"/>
+			</GrammarAST>
+			<BlockAST text="BLOCK">
+				<AltAST text="ALT">
+					<GrammarAST text="[0-9a-fA-F]"/>
+				</AltAST>
+			</BlockAST>
+		</RuleAST>
+		<RuleAST text="RULE">
+			<GrammarAST text="SAFECODEPOINT"/>
+			<GrammarAST text="RULEMODIFIERS">
+				<GrammarAST text="fragment"/>
+			</GrammarAST>
+			<BlockAST text="BLOCK">
+				<AltAST text="ALT">
+					<NotAST text="~">
+						<SetAST text="SET">
+							<GrammarAST text="["\\\u0000-\u001F]"/>
+						</SetAST>
+					</NotAST>
+				</AltAST>
+			</BlockAST>
+		</RuleAST>
+		<RuleAST text="RULE">
+			<GrammarAST text="NUMBER"/>
+			<BlockAST text="BLOCK">
+				<AltAST text="ALT">
+					<OptionalBlockAST text="?">
+						<BlockAST text="BLOCK">
+							<AltAST text="ALT">
+								<TerminalAST text="'-'"/>
+							</AltAST>
+						</BlockAST>
+					</OptionalBlockAST>
+					<TerminalAST text="INT"/>
+					<OptionalBlockAST text="?">
+						<BlockAST text="BLOCK">
+							<AltAST text="ALT">
+								<TerminalAST text="'.'"/>
+								<PlusBlockAST text="+">
+									<BlockAST text="BLOCK">
+										<AltAST text="ALT">
+											<GrammarAST text="[0-9]"/>
+										</AltAST>
+									</BlockAST>
+								</PlusBlockAST>
+							</AltAST>
+						</BlockAST>
+					</OptionalBlockAST>
+					<OptionalBlockAST text="?">
+						<BlockAST text="BLOCK">
+							<AltAST text="ALT">
+								<TerminalAST text="EXP"/>
+							</AltAST>
+						</BlockAST>
+					</OptionalBlockAST>
+				</AltAST>
+			</BlockAST>
+		</RuleAST>
+		<RuleAST text="RULE">
+			<GrammarAST text="INT"/>
+			<GrammarAST text="RULEMODIFIERS">
+				<GrammarAST text="fragment"/>
+			</GrammarAST>
+			<BlockAST text="BLOCK">
+				<AltAST text="ALT">
+					<TerminalAST text="'0'"/>
+				</AltAST>
+				<AltAST text="ALT">
+					<GrammarAST text="[1-9]"/>
+					<StarBlockAST text="*">
+						<BlockAST text="BLOCK">
+							<AltAST text="ALT">
+								<GrammarAST text="[0-9]"/>
+							</AltAST>
+						</BlockAST>
+					</StarBlockAST>
+				</AltAST>
+			</BlockAST>
+		</RuleAST>
+		<RuleAST text="RULE">
+			<GrammarAST text="EXP"/>
+			<GrammarAST text="RULEMODIFIERS">
+				<GrammarAST text="fragment"/>
+			</GrammarAST>
+			<BlockAST text="BLOCK">
+				<AltAST text="ALT">
+					<GrammarAST text="[Ee]"/>
+					<OptionalBlockAST text="?">
+						<BlockAST text="BLOCK">
+							<AltAST text="ALT">
+								<GrammarAST text="[+\-]"/>
+							</AltAST>
+						</BlockAST>
+					</OptionalBlockAST>
+					<PlusBlockAST text="+">
+						<BlockAST text="BLOCK">
+							<AltAST text="ALT">
+								<GrammarAST text="[0-9]"/>
+							</AltAST>
+						</BlockAST>
+					</PlusBlockAST>
+				</AltAST>
+			</BlockAST>
+		</RuleAST>
+		<RuleAST text="RULE">
+			<GrammarAST text="WS"/>
+			<BlockAST text="BLOCK">
+				<AltAST text="LEXER_ALT_ACTION">
+					<AltAST text="ALT">
+						<PlusBlockAST text="+">
+							<BlockAST text="BLOCK">
+								<AltAST text="ALT">
+									<GrammarAST text="[ \t\n\r]"/>
+								</AltAST>
+							</BlockAST>
+						</PlusBlockAST>
+					</AltAST>
+					<GrammarAST text="skip"/>
+				</AltAST>
+			</BlockAST>
+		</RuleAST>
+	</GrammarAST>
+</GrammarRootAST>

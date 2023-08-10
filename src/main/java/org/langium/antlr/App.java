@@ -45,6 +45,8 @@ public class App extends Tool {
         LangiumGeneratingVisitor2 visitor = new LangiumGeneratingVisitor2();
         Grammar lexer = visitor.generate(grammar.implicitLexer.ast, null);
         Grammar parser = visitor.generate(grammar.ast, new Grammar[] { lexer });
+        AST2XMLGenerator.generate(grammar.ast, 0);
+        AST2XMLGenerator.generate(grammar.implicitLexer.ast, 0);
         return lexer.print(0)+"----------"+parser.print(0);
     }
 }
