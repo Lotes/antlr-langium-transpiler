@@ -13,6 +13,6 @@ public class SequenceRuleExpression extends RuleExpression {
 
     @Override
     public String print(final int indent) {
-        return this.children.stream().map(c -> c.print(indent+1)).collect(Collectors.joining(" "));
+        return this.children.stream().map(c -> c.print(0)).collect(Collectors.joining(" "));
     }
 }

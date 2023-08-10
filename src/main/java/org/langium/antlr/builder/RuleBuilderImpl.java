@@ -1,5 +1,9 @@
 package org.langium.antlr.builder;
 
+import java.util.Collection;
+import java.util.LinkedList;
+import java.util.List;
+
 import org.langium.antlr.model.Rule;
 import org.langium.antlr.model.RuleExpression;
 import org.langium.antlr.model.RuleKind;
@@ -10,7 +14,7 @@ public class RuleBuilderImpl implements RuleBuilder {
     private GrammarBuilderImpl parent;
     private RuleKind kind;
     private RuleExpression body;
-    private Iterable<RuleModifier> modifiers;
+    private List<RuleModifier> modifiers = new LinkedList<RuleModifier>();
 
     public RuleBuilderImpl(GrammarBuilderImpl parent, RuleKind kind) {
         this.parent = parent;
@@ -36,8 +40,18 @@ public class RuleBuilderImpl implements RuleBuilder {
     }
 
     @Override
-    public RuleBuilder modifiers(Iterable<RuleModifier> modifiers) {
-        this.modifiers = modifiers;
+    public RuleBuilder modifiers(Collection<RuleModifier> modifiers) {
+        this.modifiers.addAll(modifiers);
+        return this;
+    }
+
+    @Override
+    public RuleBuilder setHidden(boolean hidden) {
+        if(hidden) {
+            this.modifiers.add(RuleModifier.hidden);
+        } else {
+            this.modifiers.remove(RuleModifier.hidden);
+        }
         return this;
     }
 

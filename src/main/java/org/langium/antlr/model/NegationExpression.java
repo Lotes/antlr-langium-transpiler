@@ -10,7 +10,7 @@ public class NegationExpression extends RuleExpression {
 
     @Override
     public String print(int indent) {
-        return Utilities.indent(indent)+"!"+expression.print(0);
+        return "!"+expression.print(0);
     }
     
 }

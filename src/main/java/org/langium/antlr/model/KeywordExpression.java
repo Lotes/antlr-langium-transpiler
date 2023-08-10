@@ -9,6 +9,6 @@ public class KeywordExpression extends RuleExpression {
 
     @Override
     public String print(int indent) {
-        return Utilities.indent(indent) +"'"+ text + "'";
+        return "'"+ text + "'";
     }
 }

@@ -11,6 +11,6 @@ public class QuantifierExpression extends RuleExpression {
 
     @Override
     public String print(int indent) {
-        return String.format("%s(%s)%s", Utilities.indent(indent), expression.print(indent), kind.getSymbol());
+        return String.format("(%s)%s", expression.print(0), kind.getSymbol());
     }
 }

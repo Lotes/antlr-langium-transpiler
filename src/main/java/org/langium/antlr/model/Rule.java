@@ -15,6 +15,6 @@ public class Rule implements Printable {
 
     @Override
     public String print(int indent) {
-        return Utilities.indent(indent)+(modifiers != null ? modifiers.toString()+" ": "")+kind+" rule " + name + " = "+body.print(indent);
+        return (modifiers != null ? modifiers.toString()+" ": "")+kind+" rule " + name + " = "+body.print(indent);
     }
 }

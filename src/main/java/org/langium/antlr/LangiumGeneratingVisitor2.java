@@ -15,6 +15,7 @@ import org.antlr.v4.tool.ast.BlockAST;
 import org.antlr.v4.tool.ast.GrammarAST;
 import org.langium.antlr.builder.GrammarBuilder;
 import org.langium.antlr.builder.GrammarBuilderImpl;
+import org.langium.antlr.builder.RuleBuilder;
 import org.langium.antlr.model.AlternativesRuleExpression;
 import org.langium.antlr.model.Grammar;
 import org.langium.antlr.model.KeywordExpression;
@@ -47,27 +48,27 @@ public class LangiumGeneratingVisitor2 {
     Iterable<RuleAST> rules = this.expectChildrenOfType(rulesNode);
     for (RuleAST rule : rules) {
       var ruleName = expectChildName(rule, 0);
+      var ruleBuilder = builder.beginRule(isLexer ? RuleKind.Lexer : RuleKind.Parser);
+
       RuleExpression body = null;
-      Iterable<RuleModifier> modifiers = null;
+      Collection<RuleModifier> modifiers = new LinkedList<RuleModifier>();
       switch (rule.getChildCount()) {
         case 2: {
           GrammarAST block = expectNamedChild(rule, 1, "BLOCK");
-          body = this.readBlock(block);
+          body = this.readBlock(ruleBuilder, block);
         }
           break;
         case 3: {
           GrammarAST modifiersParent = expectNamedChild(rule, 1, "RULEMODIFIERS");
           GrammarAST block = expectNamedChild(rule, 2, "BLOCK");
           modifiers = this.readModifier(modifiersParent);
-          body = this.readBlock(block);
+          body = this.readBlock(ruleBuilder, block);
         }
           break;
         default:
           throw new IllegalStateException("Unexpected rule child count: " + rule.getChildCount());
       }
-
-      builder.beginRule(isLexer ? RuleKind.Lexer : RuleKind.Parser)
-          .name(ruleName)
+      ruleBuilder.name(ruleName)
           .body(body)
           .modifiers(modifiers)
           .end();
@@ -75,39 +76,43 @@ public class LangiumGeneratingVisitor2 {
     return builder.build();
   }
 
-  private RuleExpression readBlock(GrammarAST block) {
+  private RuleExpression readBlock(RuleBuilder ruleBuilder, GrammarAST block) {
     Collection<AltAST> children = expectChildrenOfType(block);
     return new AlternativesRuleExpression(children.stream().map(c -> {
       if(c.getText().equals("ALT")) {
-        return this.readAlternative(c);
+        return this.readAlternative(ruleBuilder, c);
       } else if(c.getText().equals("LEXER_ALT_ACTION")) {
         AltAST alt = expectNamedChild(c, 0, "ALT");
-        return readAlternative(alt);
+        String action = expectChildName(c, 1);
+        if(action.equals("skip")) {
+          ruleBuilder.setHidden(true);
+        }
+        return readAlternative(ruleBuilder, alt);
       } else {
         throw new IllegalStateException("Unexpected child: " + c.getClass().getSimpleName()+" text='"+c.getText()+"' (line "+c.getLine()+")");
       }
     }).toList());
   }
 
-  private RuleExpression readAlternative(AltAST alt) {
+  private RuleExpression readAlternative(RuleBuilder ruleBuilder, AltAST alt) {
     return new SequenceRuleExpression(alt.getChildren().stream().map(c -> (GrammarAST) c).map(child -> {
       switch(child.getClass().getSimpleName()) {
         case "BlockAST": {
-          return this.readBlock(child);
+          return this.readBlock(ruleBuilder, child);
         }
         case "PlusBlockAST": {
           BlockAST block = expectNamedChild(child, 0, "BLOCK");
-          RuleExpression expression = this.readBlock(block);
+          RuleExpression expression = this.readBlock(ruleBuilder, block);
           return new QuantifierExpression(QuantifierKind.OneOrMore, expression);
         }
         case "StarBlockAST": {
           BlockAST block = expectNamedChild(child, 0, "BLOCK");
-          RuleExpression expression = this.readBlock(block);
+          RuleExpression expression = this.readBlock(ruleBuilder, block);
           return new QuantifierExpression(QuantifierKind.ZeroOrMore, expression);
         } 
         case "OptionalBlockAST": {
           BlockAST block = expectNamedChild(child, 0, "BLOCK");
-          RuleExpression expression = this.readBlock(block);
+          RuleExpression expression = this.readBlock(ruleBuilder, block);
           return new QuantifierExpression(QuantifierKind.Optional, expression);
         }
         case "TerminalAST": {
@@ -145,7 +150,7 @@ public class LangiumGeneratingVisitor2 {
     return m.matches();
   }
 
-  private Iterable<RuleModifier> readModifier(GrammarAST modifiersParent) {
+  private Collection<RuleModifier> readModifier(GrammarAST modifiersParent) {
     List<RuleModifier> result = new LinkedList<RuleModifier>();
     Iterable<GrammarAST> children = expectChildrenOfType(modifiersParent);
     for (GrammarAST child : children) {

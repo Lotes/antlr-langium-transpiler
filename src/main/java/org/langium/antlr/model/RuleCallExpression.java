@@ -9,6 +9,6 @@ public class RuleCallExpression extends RuleExpression {
 
     @Override
     public String print(int indent) {
-        return Utilities.indent(indent)+" "+ruleName+" ";
+        return ruleName+" ";
     }
 }
