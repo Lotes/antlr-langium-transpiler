@@ -1,3 +1,4 @@
 target/
 .antlr/
 *.langium
+src/test/resources/grammars/**/target

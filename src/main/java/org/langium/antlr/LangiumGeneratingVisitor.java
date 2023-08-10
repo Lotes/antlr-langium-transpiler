@@ -1,319 +1,195 @@
 package org.langium.antlr;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.util.Collection;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.antlr.runtime.tree.CommonTree;
-import org.antlr.runtime.tree.Tree;
-import org.antlr.v4.tool.Grammar;
-import org.antlr.v4.tool.Rule;
+import org.antlr.v4.tool.ast.GrammarRootAST;
+import org.antlr.v4.tool.ast.RuleAST;
+import org.antlr.v4.tool.ast.SetAST;
 import org.antlr.v4.tool.ast.AltAST;
 import org.antlr.v4.tool.ast.BlockAST;
 import org.antlr.v4.tool.ast.GrammarAST;
-import org.antlr.v4.tool.ast.GrammarASTVisitor;
-import org.antlr.v4.tool.ast.GrammarRootAST;
-import org.antlr.v4.tool.ast.NotAST;
-import org.antlr.v4.tool.ast.OptionalBlockAST;
-import org.antlr.v4.tool.ast.PlusBlockAST;
-import org.antlr.v4.tool.ast.PredAST;
-import org.antlr.v4.tool.ast.RangeAST;
-import org.antlr.v4.tool.ast.RuleAST;
-import org.antlr.v4.tool.ast.RuleRefAST;
-import org.antlr.v4.tool.ast.SetAST;
-import org.antlr.v4.tool.ast.StarBlockAST;
-import org.antlr.v4.tool.ast.TerminalAST;
+import org.langium.antlr.builder.GrammarBuilder;
+import org.langium.antlr.builder.GrammarBuilderImpl;
+import org.langium.antlr.builder.RuleBuilder;
+import org.langium.antlr.model.AlternativesRuleExpression;
+import org.langium.antlr.model.Grammar;
+import org.langium.antlr.model.KeywordExpression;
+import org.langium.antlr.model.QuantifierExpression;
+import org.langium.antlr.model.QuantifierKind;
+import org.langium.antlr.model.RegexRuleExpression;
+import org.langium.antlr.model.RuleCallExpression;
+import org.langium.antlr.model.RuleExpression;
+import org.langium.antlr.model.RuleKind;
+import org.langium.antlr.model.RuleModifier;
+import org.langium.antlr.model.SequenceRuleExpression;
 
-public class LangiumGeneratingVisitor implements GrammarASTVisitor {
+public class LangiumGeneratingVisitor {
 
   public static final String NL = System.lineSeparator();
-  private StringBuilder result = new StringBuilder();
-  private Map<String, String> ruleNameMappings = new HashMap<String, String>();
-  private Grammar grammar;
 
-  public LangiumGeneratingVisitor(Grammar grammar) {
-    super();
-    this.grammar = grammar;
+  public Grammar generate(GrammarRootAST root, Iterable<Grammar> imports) {
+    return readGrammarRoot(root, imports);
   }
 
-  private int indent = 0;
-  private void printIndent() {
-    int count = indent;
-    while(count-- > 0) {
-      System.out.print('\t');
-    }
-  }
-  private void begin(CommonTree node) {
-    printIndent();
-    System.out.println("<"+node.getClass().getSimpleName()+" text=\""+node.getText().replaceAll("\"", "&quote;")+"\">");
-    indent++;
-  }
-  private void end(CommonTree node) {
-    indent--;
-    printIndent();
-    System.out.println("</"+node.getClass().getSimpleName()+">");
-  }
+  private Grammar readGrammarRoot(GrammarRootAST root, Iterable<Grammar> imports) {
+    var grammarKindText = root.getText();
+    var isLexer = grammarKindText.equals("LEXER_GRAMMAR");
 
-  @Override
-  public Object visit(GrammarAST node) {
-    begin(node);
-    if(node.getChildCount() == 0 ) {
-      String text = node.toString();
-      if(text.startsWith("[")) {
-        result.append("/");
-        result.append(text);
-        result.append("/");
+    GrammarBuilder builder = new GrammarBuilderImpl();
+
+    builder.name(expectChildName(root, 0));
+
+    GrammarAST rulesNode = this.expectNamedChild(root, 1, "RULES");
+    Iterable<RuleAST> rules = this.expectChildrenOfType(rulesNode);
+    for (RuleAST rule : rules) {
+      var ruleName = expectChildName(rule, 0);
+      if(ruleName.startsWith("T__")) {
+        continue;
       }
-    } else {
-      visitChildren(node);
-    }
-    end(node);
-    return null;
-  }
 
-  @Override
-  public Object visit(GrammarRootAST node) {
-    begin(node);
-    visitChildren(node);
-    end(node);
-    return null;
-  }
+      var ruleBuilder = builder.beginRule(isLexer ? RuleKind.Lexer : RuleKind.Parser);
 
-  private void visitChildren(GrammarAST node) {
-    visitChildren(node, "");
-  }
-
-  private void visitChildren(GrammarAST node, String glue) {
-    int count = node.getChildCount();
-    if (count > 0) {
-      int index = 0;
-      for (Object child : node.getChildren()) {
-        ((GrammarAST) child).visit(this);
-        if (index < count - 1 && glue != null && !glue.isEmpty()) {
-          result.append(glue);
+      RuleExpression body = null;
+      Collection<RuleModifier> modifiers = new LinkedList<RuleModifier>();
+      switch (rule.getChildCount()) {
+        case 2: {
+          GrammarAST block = expectNamedChild(rule, 1, "BLOCK");
+          body = this.readBlock(ruleBuilder, block);
         }
-        index++;
+          break;
+        case 3: {
+          GrammarAST modifiersParent = expectNamedChild(rule, 1, "RULEMODIFIERS");
+          GrammarAST block = expectNamedChild(rule, 2, "BLOCK");
+          modifiers = this.readModifier(modifiersParent);
+          body = this.readBlock(ruleBuilder, block);
+        }
+          break;
+        default:
+          throw new IllegalStateException("Unexpected rule child count: " + rule.getChildCount());
       }
+      ruleBuilder.name(ruleName)
+          .body(body)
+          .modifiers(modifiers)
+          .end();
     }
+    return builder.build();
   }
 
-  @Override
-  public Object visit(RuleAST node) {
-    begin(node);
-    if (node.getRuleName().startsWith("T__")) {
-      end(node);
-      return null;
-    }
-
-    String originalRuleName = node.getRuleName();
-    String finalRuleName = !node.isLexerRule()
-        ? getParserRuleName(originalRuleName)
-        : getLexerRuleName(originalRuleName);
-
-    Rule rule = !node.isLexerRule() ? grammar.getRule(node.atnState.ruleIndex) : null;
-    boolean isStartRule = rule != null ? rule.isStartRule : false;
-    String start = isStartRule ? "entry " : "";
-
-    if (finalRuleName != null) {
-      //TODO hidden is not correct (skip or hidden channel)
-      String hidden = hasModifier(node, "hidden") ? "hidden " : "";
-      String fragment = hasModifier(node, "fragment") ? "fragment " : "";
-      String terminal = node.isLexerRule() ? hidden+"terminal "+fragment : "";
-      String returns = node.isLexerRule() ? " returns string" : "";
-      result.append(start + terminal + finalRuleName + returns + ": ");
-      visitChildren(node);
-      result.append(";" + NL);
-    }
-    end(node);
-    return null;
+  private RuleExpression readBlock(RuleBuilder ruleBuilder, GrammarAST block) {
+    Collection<AltAST> children = expectChildrenOfType(block);
+    return new AlternativesRuleExpression(children.stream().map(c -> {
+      if(c.getText().equals("ALT")) {
+        return this.readAlternative(ruleBuilder, c);
+      } else if(c.getText().equals("LEXER_ALT_ACTION")) {
+        AltAST alt = expectNamedChild(c, 0, "ALT");
+        String action = expectChildName(c, 1);
+        if(action.equals("skip")) {
+          ruleBuilder.setHidden(true);
+        }
+        return readAlternative(ruleBuilder, alt);
+      } else {
+        throw new IllegalStateException("Unexpected child: " + c.getClass().getSimpleName()+" text='"+c.getText()+"' (line "+c.getLine()+")");
+      }
+    }).toList());
   }
 
-  private boolean hasModifier(RuleAST node, String modifier) {
-    if(!node.isLexerRule()) {
+  private RuleExpression readAlternative(RuleBuilder ruleBuilder, AltAST alt) {
+    return new SequenceRuleExpression(alt.getChildren().stream().map(c -> (GrammarAST) c).map(child -> {
+      switch(child.getClass().getSimpleName()) {
+        case "BlockAST": {
+          return this.readBlock(ruleBuilder, child);
+        }
+        case "PlusBlockAST": {
+          BlockAST block = expectNamedChild(child, 0, "BLOCK");
+          RuleExpression expression = this.readBlock(ruleBuilder, block);
+          return new QuantifierExpression(QuantifierKind.OneOrMore, expression);
+        }
+        case "StarBlockAST": {
+          BlockAST block = expectNamedChild(child, 0, "BLOCK");
+          RuleExpression expression = this.readBlock(ruleBuilder, block);
+          return new QuantifierExpression(QuantifierKind.ZeroOrMore, expression);
+        } 
+        case "OptionalBlockAST": {
+          BlockAST block = expectNamedChild(child, 0, "BLOCK");
+          RuleExpression expression = this.readBlock(ruleBuilder, block);
+          return new QuantifierExpression(QuantifierKind.Optional, expression);
+        }
+        case "TerminalAST": {
+          var text = child.getText();
+          if(text.startsWith("\'")) {
+            text = text.substring(1, text.length()-1);
+            return new KeywordExpression(text);
+          }
+          return new RuleCallExpression(text);
+        }
+        case "RuleRefAST":
+          return new RuleCallExpression(child.getText());
+        case "GrammarAST": {
+          var text = child.getText();
+          return new RegexRuleExpression(text);
+        }
+        case "NotAST": {
+          SetAST set = expectNamedChild(child, 0, "SET");
+          String regex = expectChildName(set, 0);
+          return new RegexRuleExpression(regex);
+        }
+        default:
+          throw new IllegalStateException("Unexpected alternative child: " + child.getClass().getSimpleName()+" text='"+child.getText()+"' (line "+child.getLine()+")");
+      }
+    }).toList());
+  }
+
+  public static boolean isValidIdentifier(String identifier) {
+    String regex = "^([a-zA-Z_][a-zA-Z\\d_]*)$";
+    Pattern p = Pattern.compile(regex);
+    if (identifier == null) {
       return false;
     }
-    Tree ruleModifiers = node.getChild(1);
-    for(int index=0; index<ruleModifiers.getChildCount(); index++) {
-      Tree ruleModifier = ruleModifiers.getChild(index);
-      if(ruleModifier.getText().toLowerCase().equals(modifier)) {
-        return true;
+    Matcher m = p.matcher(identifier);
+    return m.matches();
+  }
+
+  private Collection<RuleModifier> readModifier(GrammarAST modifiersParent) {
+    List<RuleModifier> result = new LinkedList<RuleModifier>();
+    Iterable<GrammarAST> children = expectChildrenOfType(modifiersParent);
+    for (GrammarAST child : children) {
+      var text = child.getText();
+      try {
+        var modifier = RuleModifier.valueOf(text);
+        result.add(modifier);
+      } catch (IllegalArgumentException e) {
+        throw new IllegalStateException("Unexpected rule modifier: " + text);
       }
     }
-    return false;
+    return result;
   }
 
-  @Override
-  public Object visit(BlockAST node) {
-    begin(node);
-    if(node.getChildCount() == 1 || node.parent instanceof RuleAST) {
-      visitChildren(node, " | ");
-    } else {
-      result.append("(");
-      visitChildren(node, " | ");
-      result.append(")");
+  private <T extends CommonTree> Collection<T> expectChildrenOfType(CommonTree node) {
+    var children = node.getChildren().stream().map(c -> {
+      @SuppressWarnings("unchecked")
+      var casted = (T) c;
+      return casted;
+    }).toList();
+    return children;
+  }
+
+  private String expectChildName(CommonTree node, int childIndex) {
+    var child = node.getChild(childIndex);
+    return child.getText();
+  }
+
+  private <T extends CommonTree> T expectNamedChild(CommonTree node, int childIndex, String name) {
+    var child = node.getChild(childIndex);
+    if (!child.getText().equals(name)) {
+      throw new IllegalStateException("Expected child to be '" + name + "'' but got '" + child.getText() + "'");
     }
-    end(node);
-    return null;
-  }
-
-  @Override
-  public Object visit(OptionalBlockAST node) {
-    begin(node);
-    if(node.getChildCount() == 1) {
-      visitChildren(node);
-      result.append("?");
-    } else {
-      result.append("(");
-      visitChildren(node);
-      result.append(")?");
-    }
-    end(node);
-    return null;
-  }
-
-  @Override
-  public Object visit(PlusBlockAST node) {
-    begin(node);
-    if(node.getChildCount() == 1) {
-      visitChildren(node);
-      result.append("+");
-    } else {
-      result.append("(");
-      visitChildren(node);
-      result.append(")+");
-    }
-    end(node);
-    return null;
-  }
-
-  @Override
-  public Object visit(StarBlockAST node) {
-    begin(node);
-    if(node.getChildCount() == 1) {
-      visitChildren(node);
-      String text = result.toString();
-      char lastChar = text.charAt(text.length() - 1);
-      if(lastChar == '/') {
-        result.append(" ");
-      }
-      result.append("*");
-    } else {
-      result.append("(");
-      visitChildren(node);
-      result.append(")*");
-    }
-    end(node);
-    return null;
-  }
-
-  @Override
-  public Object visit(AltAST node) {
-    begin(node);
-    if(node.getChildCount() == 1 || node.parent instanceof RuleAST || (node.parent instanceof BlockAST && node.parent.parent instanceof RuleAST)) {
-      visitChildren(node, " ");
-    } else {
-      result.append("(");
-      visitChildren(node, " ");
-      result.append(")");
-    }
-    end(node);
-    return null;
-  }
-
-  @Override
-  public Object visit(NotAST node) {
-    begin(node);
-    boolean hasOnlyOneChild = node.getChildCount() == 1;
-    result.append("!");
-    if(!hasOnlyOneChild) {result.append("(");}
-    visitChildren(node);
-    if(!hasOnlyOneChild) {result.append(")");}
-    end(node);
-    return "/* TODO not */";
-  }
-
-  @Override
-  public Object visit(PredAST node) {
-    begin(node);
-    visitChildren(node);
-    end(node);
-    return null;
-  }
-
-  @Override
-  public Object visit(RangeAST node) {
-    begin(node);
-    visitChildren(node);
-    end(node);
-    return null;
-  }
-
-  @Override
-  public Object visit(SetAST node) {
-    begin(node);
-    visitChildren(node);
-    end(node);
-    return null;
-  }
-
-  @Override
-  public Object visit(RuleRefAST node) 
-  {
-    begin(node);
-    String newName = getParserRuleName(node.getText());
-    result.append(newName);
-    end(node);
-    return null;
-  }
-
-  private String getParserRuleName(String originalName) {
-    if (!ruleNameMappings.containsKey(originalName)) {
-      String nameBase = originalName.substring(0, 1).toUpperCase() + originalName.substring(1);
-      String newName = nameBase;
-      int index = 1;
-      while (ruleNameMappings.containsValue(newName)) {
-        nameBase = nameBase + index;
-        index++;
-      }
-      ruleNameMappings.put(originalName, newName);
-    }
-    String newName = ruleNameMappings.get(originalName);
-    return newName;
-  }
-
-  private String getLexerRuleName(String originalName) {
-    if (originalName.equals("EOF")) {
-      return "/* EOF */";
-    }
-    if (!ruleNameMappings.containsKey(originalName)) {
-      if (originalName.startsWith("'")) {
-        ruleNameMappings.put(originalName, originalName);
-      } else {
-        String nameBase = originalName.toUpperCase();
-        String newName = nameBase;
-        int index = 1;
-        while (ruleNameMappings.containsValue(newName)) {
-          nameBase = nameBase + index;
-          index++;
-        }
-        ruleNameMappings.put(originalName, newName);
-      }
-    }
-    return ruleNameMappings.get(originalName);
-  }
-
-  @Override
-  public Object visit(TerminalAST node) {
-    begin(node);
-    String newName = getLexerRuleName(node.getText());
-    if (newName != null) {
-      result.append(newName);
-    }
-    end(node);
-    return null;
-  }
-
-  @Override
-  public String toString() {
-    return result.toString();
+    @SuppressWarnings("unchecked")
+    var result = (T) child;
+    return result;
   }
 }

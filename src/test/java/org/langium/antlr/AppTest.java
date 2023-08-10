@@ -1,20 +1,30 @@
 package org.langium.antlr;
 
-import static org.junit.Assert.assertTrue;
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
 
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
 
-/**
- * Unit test for simple App.
- */
 public class AppTest 
 {
-    /**
-     * Rigorous Test :-)
-     */
     @Test
-    public void shouldAnswerWithTrue()
+    public void shouldGenerateLangiumGrammars() throws IOException
     {
-        assertTrue( true );
+        File resourcesDirectory = new File("src/test/resources");
+        File grammarsDirectory = new File(resourcesDirectory, "grammars");
+        for (File grammarDirectory : grammarsDirectory.listFiles(f -> f.isDirectory())) {
+            var entryFile = new File(grammarDirectory, "entry.txt");
+            var entry = Files.readString(entryFile.toPath());
+            File entryGrammar = new File(grammarDirectory, entry);
+            File targetFolder = new File(grammarDirectory, "target");
+            targetFolder.mkdir();
+            App.main(new String[] {
+                entryGrammar.getAbsolutePath(),
+                targetFolder.getAbsolutePath()
+            });
+        }
     }
 }
