@@ -48,7 +48,14 @@ public class LangiumGeneratingVisitor {
   }
 
   private void addActions(Grammar grammar) {
-
+   /* for (Rule rule : grammar.rules.stream().filter(r -> r.body instanceof AlternativesRuleExpression).toList()) {
+      var alternatives = (AlternativesRuleExpression)rule.body;
+      if(alternatives.children.size() > 1) {
+        for (var alt : alternatives.children) {
+          
+        }
+      }
+    }*/
   }
 
   private void addAssignments(Grammar grammar) {

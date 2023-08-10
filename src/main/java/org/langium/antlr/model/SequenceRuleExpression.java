@@ -1,13 +1,17 @@
 package org.langium.antlr.model;
 
-import java.util.Collection;
+import java.util.List;
 import java.util.stream.Collectors;
 
 public class SequenceRuleExpression extends RuleExpression {
-    public final Collection<RuleExpression> children;
+    public final List<RuleExpression> children;
 
-    public SequenceRuleExpression(Collection<RuleExpression> children) {
+    public SequenceRuleExpression(List<RuleExpression> children) {
         this.children = children;
+    }
+
+    public void insertExpression(RuleExpression expression, int index) {
+        this.children.add(index, expression);
     }
 
     @Override
