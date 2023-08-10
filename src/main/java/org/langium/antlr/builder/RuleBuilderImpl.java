@@ -1,12 +1,16 @@
 package org.langium.antlr.builder;
 
 import org.langium.antlr.model.Rule;
+import org.langium.antlr.model.RuleExpression;
 import org.langium.antlr.model.RuleKind;
+import org.langium.antlr.model.RuleModifier;
 
 public class RuleBuilderImpl implements RuleBuilder {
     private String name;
     private GrammarBuilderImpl parent;
     private RuleKind kind;
+    private RuleExpression body;
+    private Iterable<RuleModifier> modifiers;
 
     public RuleBuilderImpl(GrammarBuilderImpl parent, RuleKind kind) {
         this.parent = parent;
@@ -20,9 +24,21 @@ public class RuleBuilderImpl implements RuleBuilder {
 
     @Override
     public Rule end() {
-        var rule = new Rule(kind, name);
+        var rule = new Rule(kind, name, body, modifiers);
         parent.rules.add(rule);
         return rule;
+    }
+
+    @Override
+    public RuleBuilder body(RuleExpression body) {
+        this.body = body;
+        return this;
+    }
+
+    @Override
+    public RuleBuilder modifiers(Iterable<RuleModifier> modifiers) {
+        this.modifiers = modifiers;
+        return this;
     }
 
 }

@@ -22,7 +22,7 @@ public class AST2XMLGenerator {
         }
     }
 
-    private static void printIdent(int level) {
+    public static void printIdent(int level) {
         for (int i = 0; i < level; i++) {
             System.out.print("\t");
         }
