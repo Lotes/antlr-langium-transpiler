@@ -138,10 +138,14 @@ public class LangiumGeneratingVisitor {
           String regex = expectChildName(set, 0);
           return new RegexRuleExpression(regex);
         }
+        case "PredAST":
+        case "ActionAST": {
+          return null;
+        }
         default:
           throw new IllegalStateException("Unexpected alternative child: " + child.getClass().getSimpleName()+" text='"+child.getText()+"' (line "+child.getLine()+")");
       }
-    }).toList());
+    }).filter(c -> c != null).toList());
   }
 
   public static boolean isValidIdentifier(String identifier) {

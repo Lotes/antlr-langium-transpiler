@@ -5,26 +5,33 @@ import java.util.List;
 import org.antlr.runtime.tree.CommonTree;
 
 public class AST2XMLGenerator {
-    public static void generate(CommonTree tree, int level) {
+    private StringBuilder stringBuilder;
+
+    public String generate(CommonTree tree) {
+        stringBuilder = new StringBuilder();
+        return generate(tree, 0);
+    }
+    private String generate(CommonTree tree, int level) {
         printIdent(level);
-        System.out.print("<"+tree.getClass().getSimpleName()+" text=\""+tree.getText()+"\"");
+        stringBuilder.append("<"+tree.getClass().getSimpleName()+" text=\""+tree.getText().replace("\"", "&quote;")+"\"");
         if(tree.getChildCount() == 0) {
-            System.out.println("/>");
+            stringBuilder.append("/>\n");
         } else {
-            System.out.println(">");
+            stringBuilder.append(">\n");
             var nextLevel = level + 1;
             List<CommonTree> children = tree.getChildren().stream().map(c -> (CommonTree) c).toList();
             for (CommonTree child : children) {
                 generate(child, nextLevel);
             }
             printIdent(level);
-            System.out.println("</"+tree.getClass().getSimpleName()+">");
+            stringBuilder.append("</"+tree.getClass().getSimpleName()+">\n");
         }
+        return stringBuilder.toString();
     }
 
-    public static void printIdent(int level) {
+    private void printIdent(int level) {
         for (int i = 0; i < level; i++) {
-            System.out.print("\t");
+            stringBuilder.append("\t");
         }
     }
 }

@@ -1,15 +1,10 @@
 package org.langium.antlr;
 
-import java.io.FileWriter;
 import java.io.IOException;
-import java.io.PrintWriter;
 import java.nio.file.Files;
-import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.stream.Stream;
-
 import org.antlr.v4.Tool;
 import org.langium.antlr.model.Grammar;
 
@@ -37,16 +32,27 @@ public class App extends Tool {
     }
 
      public GrammarFile[] toLangium(org.antlr.v4.tool.Grammar grammar) {
+        AST2XMLGenerator xmlGenerator = new AST2XMLGenerator();
         LangiumGeneratingVisitor visitor = new LangiumGeneratingVisitor();
         List<GrammarFile> result = new LinkedList<GrammarFile>();
         List<Grammar> grammars = new LinkedList<Grammar>();
         if(grammar.implicitLexer.ast != null) {
-            var lexer = visitor.generate(grammar.implicitLexer.ast, null);
-            grammars.add(lexer);
-            result.add(new GrammarFile(lexer.name+".langium", lexer.print(0)));
+            result.add(new GrammarFile(grammar.name+".lexer.xml", xmlGenerator.generate(grammar.implicitLexer.ast)));
+            try {
+                var lexerGrammar = visitor.generate(grammar.implicitLexer.ast, null);
+                grammars.add(lexerGrammar);
+                result.add(new GrammarFile(lexerGrammar.name+".langium", lexerGrammar.print(0)));
+            } catch (Exception e) {
+                result.add(new GrammarFile(grammar.name+".lexer.error", e.getMessage()+"\n"+e.getStackTrace()));
+            }
         }
-        Grammar parser = visitor.generate(grammar.ast, grammars);
-        result.add(new GrammarFile(parser.name+".langium", parser.print(0)));
+        result.add(new GrammarFile(grammar.name+".parser.xml", xmlGenerator.generate(grammar.ast)));
+        try {
+            Grammar parser = visitor.generate(grammar.ast, grammars);
+            result.add(new GrammarFile(parser.name+".langium", parser.print(0)));    
+        } catch (Exception e) {
+            result.add(new GrammarFile(grammar.name+".parser.error", e.getMessage()+"\n"+e.getStackTrace()));
+        }
         return result.toArray(new GrammarFile[0]);
     }
 }
