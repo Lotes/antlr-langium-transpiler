@@ -2,20 +2,22 @@ package org.langium.antlr.builder;
 
 import java.util.ArrayList;
 import java.util.List;
-
 import org.langium.antlr.model.Grammar;
+import org.langium.antlr.model.NamingService;
 import org.langium.antlr.model.Rule;
 import org.langium.antlr.model.RuleKind;
 
 public class GrammarBuilderImpl implements GrammarBuilder {
 
     private String name;
+    public final NamingService namingService;
     public final List<Rule> rules = new ArrayList<Rule>();
     public final List<Grammar> imports = new ArrayList<Grammar>();
     private RuleKind kind;
 
-    public GrammarBuilderImpl(RuleKind kind) {
+    public GrammarBuilderImpl(NamingService namingService, RuleKind kind) {
         super();
+        this.namingService = namingService;
         this.kind = kind;
     }
 
@@ -30,7 +32,7 @@ public class GrammarBuilderImpl implements GrammarBuilder {
         if(name == null) {
             throw new IllegalStateException("Grammar name missing");
         }
-        return new Grammar(name, rules, kind, imports);
+        return new Grammar(namingService, name, rules, kind, imports);
     }
 
     @Override

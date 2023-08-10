@@ -7,12 +7,14 @@ public class Grammar implements Printable {
     public final Iterable<Rule> rules;
     public final RuleKind grammarKind;
     public final Collection<Grammar> imports;
+    public final NamingService namingService;
 
-    public Grammar(String name, Iterable<Rule> rules, RuleKind grammarKind, Collection<Grammar> imports) {
+    public Grammar(NamingService namingService, String name, Iterable<Rule> rules, RuleKind grammarKind, Collection<Grammar> imports) {
         this.name = name;
         this.rules = rules;
         this.grammarKind = grammarKind;
         this.imports = imports;
+        this.namingService = namingService;
     }
 
     @Override

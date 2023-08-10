@@ -7,8 +7,14 @@ public class Rule implements Printable {
     public final RuleKind kind;
     public final RuleExpression body;
     public final Collection<RuleModifier> modifiers;
+    private NamingService namingService;
+    public String getLangiumName() {
+        return namingService.get(name);
+    }
 
-    public Rule(RuleKind kind, String name, RuleExpression body, Collection<RuleModifier> modifiers) {
+    public Rule(NamingService namingService, RuleKind kind, String name, RuleExpression body, Collection<RuleModifier> modifiers) {
+        this.namingService = namingService;
+        namingService.add(name, kind == RuleKind.Parser ? Utilities.capitalize(name) : Utilities.toUpperCase(name));
         this.name = name;
         this.kind = kind;
         this.body = body;
@@ -25,13 +31,13 @@ public class Rule implements Printable {
             if(modifiers.contains(RuleModifier.hidden)) {
                 fragment = "hidden " + fragment;
             }
-            return fragment + name + ": "+body.print(0)+";";
+            return fragment + getLangiumName() + ": "+body.print(0)+";";
         } else {
             String entry = "";
             if(modifiers.contains(RuleModifier.entry)) {
                 entry = "entry ";
             }            
-            return entry + name + ": "+body.print(0) + ";";
+            return entry + getLangiumName() + ": "+body.print(0) + ";";
         }
     }
 }

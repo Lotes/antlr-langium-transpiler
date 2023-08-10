@@ -7,7 +7,6 @@ public class SequenceRuleExpression extends RuleExpression {
     public final Collection<RuleExpression> children;
 
     public SequenceRuleExpression(Collection<RuleExpression> children) {
-        super();
         this.children = children;
     }
 

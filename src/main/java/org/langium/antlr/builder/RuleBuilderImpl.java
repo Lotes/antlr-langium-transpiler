@@ -27,7 +27,7 @@ public class RuleBuilderImpl implements RuleBuilder {
 
     @Override
     public Rule end() {
-        var rule = new Rule(kind, name, body, modifiers);
+        var rule = new Rule(parent.namingService, kind, name, body, modifiers);
         parent.rules.add(rule);
         return rule;
     }

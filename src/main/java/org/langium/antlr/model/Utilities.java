@@ -8,4 +8,12 @@ public class Utilities {
         }
         return sb.toString();
     }
+
+    public static String capitalize(String name) {
+        return name.substring(0, 1).toUpperCase() + name.substring(1);
+    }
+
+    public static String toUpperCase(String name) {
+        return name.toUpperCase();
+    }
 }

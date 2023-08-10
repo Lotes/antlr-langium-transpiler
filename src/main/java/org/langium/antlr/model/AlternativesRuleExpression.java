@@ -8,7 +8,6 @@ public class AlternativesRuleExpression extends RuleExpression {
     public final boolean isRoot;
 
     public AlternativesRuleExpression(Collection<RuleExpression> children, boolean isRoot) {
-        super();
         this.children = children;
         this.isRoot = isRoot;
     }

@@ -3,6 +3,7 @@ package org.langium.antlr;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
 import org.antlr.v4.Tool;
@@ -39,7 +40,7 @@ public class App extends Tool {
         if(grammar.implicitLexer.ast != null) {
             result.add(new GrammarFile(grammar.name+".lexer.xml", xmlGenerator.generate(grammar.implicitLexer.ast)));
             try {
-                var lexerGrammar = visitor.generate(grammar.implicitLexer.ast, null);
+                var lexerGrammar = visitor.generate(grammar.implicitLexer.ast, new LinkedList<Grammar>());
                 grammars.add(lexerGrammar);
                 result.add(new GrammarFile(lexerGrammar.name+".langium", lexerGrammar.print(0)));
             } catch (Exception e) {
