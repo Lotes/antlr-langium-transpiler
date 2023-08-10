@@ -48,6 +48,10 @@ public class LangiumGeneratingVisitor2 {
     Iterable<RuleAST> rules = this.expectChildrenOfType(rulesNode);
     for (RuleAST rule : rules) {
       var ruleName = expectChildName(rule, 0);
+      if(ruleName.startsWith("T__")) {
+        continue;
+      }
+
       var ruleBuilder = builder.beginRule(isLexer ? RuleKind.Lexer : RuleKind.Parser);
 
       RuleExpression body = null;

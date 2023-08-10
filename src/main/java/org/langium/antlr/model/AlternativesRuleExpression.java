@@ -4,7 +4,7 @@ import java.util.Collection;
 import java.util.stream.Collectors;
 
 public class AlternativesRuleExpression extends RuleExpression {
-    public Collection<RuleExpression> children;
+    public final Collection<RuleExpression> children;
 
     public AlternativesRuleExpression(Collection<RuleExpression> children) {
         super();
