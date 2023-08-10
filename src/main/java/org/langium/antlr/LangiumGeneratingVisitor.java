@@ -39,7 +39,20 @@ public class LangiumGeneratingVisitor {
 
   public Grammar generate(GrammarRootAST root, Collection<Grammar> imports) {
     namingService = new NamingServiceImpl();
-    return readGrammarRoot(root, imports);
+    var grammar = readGrammarRoot(root, imports);
+    if(grammar.grammarKind == RuleKind.Parser) {
+      addActions(grammar);
+      addAssignments(grammar);
+    }
+    return grammar;
+  }
+
+  private void addActions(Grammar grammar) {
+
+  }
+
+  private void addAssignments(Grammar grammar) {
+
   }
 
   private Grammar readGrammarRoot(GrammarRootAST root, Collection<Grammar> imports) {

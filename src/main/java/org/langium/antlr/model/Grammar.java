@@ -4,12 +4,12 @@ import java.util.Collection;
 
 public class Grammar implements Printable {
     public final String name;
-    public final Iterable<Rule> rules;
+    public final Collection<Rule> rules;
     public final RuleKind grammarKind;
     public final Collection<Grammar> imports;
     public final NamingService namingService;
 
-    public Grammar(NamingService namingService, String name, Iterable<Rule> rules, RuleKind grammarKind, Collection<Grammar> imports) {
+    public Grammar(NamingService namingService, String name, Collection<Rule> rules, RuleKind grammarKind, Collection<Grammar> imports) {
         this.name = name;
         this.rules = rules;
         this.grammarKind = grammarKind;
