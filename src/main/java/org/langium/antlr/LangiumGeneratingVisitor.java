@@ -27,6 +27,7 @@ import org.langium.antlr.model.NamingService;
 import org.langium.antlr.model.NamingServiceImpl;
 import org.langium.antlr.model.QuantifierExpression;
 import org.langium.antlr.model.QuantifierKind;
+import org.langium.antlr.model.RangeExpression;
 import org.langium.antlr.model.RegexRuleExpression;
 import org.langium.antlr.model.RuleCallExpression;
 import org.langium.antlr.model.RuleExpression;
@@ -57,7 +58,8 @@ public class LangiumGeneratingVisitor {
       return grammar;
     } catch (Exception e) {
       var fileContent = xmlGenerator.generate(root);
-      throw new IllegalStateException("Error while generating grammar: " + e.getMessage()+"\n"+fileContent, e);
+      e.printStackTrace();
+      throw new IllegalStateException("Error: " + e.getMessage()+"\n"+fileContent, e);
     }
   }
 
@@ -91,32 +93,32 @@ public class LangiumGeneratingVisitor {
         importGrammar(i, builder);
       });
     }
-    var nextNodeName = expectChildName(root, 1);
-    int rulesIndex;
-    if (nextNodeName == "OPTIONS") {
-      var optionsNode = this.expectNamedChild(root, 1, "OPTIONS");
-      Collection<GrammarAST> options = expectChildrenOfType(optionsNode);
-      for (GrammarAST option : options) {
-        var optionName = expectChildName(option, 0);
-        var optionValue = expectChildName(option, 1);
-        switch (optionName) {
-          case "tokenVocab":
-            String fileName = Path.of(currentWorkingDirectory, optionValue + ".g4").toAbsolutePath().toString();
-            org.antlr.v4.tool.Grammar antlr4Grammar = new Tool().loadGrammar(fileName);
-            var visitor = new LangiumGeneratingVisitor(currentWorkingDirectory);
-            var grammar = visitor.generate(antlr4Grammar.ast, imports);
-            imports.add(grammar);
-            importGrammar(grammar, builder);
-            break;
-          default:
-            throw new IllegalStateException("Unexpected option: " + optionName + "=" + optionValue);
-        }
+
+    GrammarAST rulesNode = null;
+    for(int index=1; index < root.getChildCount(); index++) {
+      var child = (GrammarAST)root.getChild(index);
+      var childType = child.getText();
+      switch(childType) {
+        case "OPTIONS":
+          parseGrammarOptions(imports, builder, child);
+          break;
+        case "import":
+          var name = expectChildName(child, 0);
+          var grammar = loadAntlr4Grammar(imports, name);
+          imports.add(grammar);
+          importGrammar(grammar, builder);
+          break;
+        case "channels {":
+        case "tokens {":
+          //Ignore
+          break;
+        case "RULES":
+          rulesNode = child;
+          break;
+        default:
+          throw new IllegalStateException("Unexpected grammar child: " + childType);
       }
-      rulesIndex = 2;
-    } else {
-      rulesIndex = 1;
     }
-    var rulesNode = this.expectNamedChild(root, rulesIndex, "RULES");
     Iterable<RuleAST> rules = this.expectChildrenOfType(rulesNode);
     boolean hasStartRule = isLexer; // lexer grammar has no entry rule!
     Map<RuleAST, RuleBuilder> ruleBuilders = new HashMap<RuleAST, RuleBuilder>();
@@ -166,6 +168,34 @@ public class LangiumGeneratingVisitor {
     return builder.build();
   }
 
+  private void parseGrammarOptions(Collection<Grammar> imports, GrammarBuilder builder, GrammarAST node) {
+    Collection<GrammarAST> options = expectChildrenOfType(node);
+    for (GrammarAST option : options) {
+      var optionName = expectChildName(option, 0);
+      var optionValue = expectChildName(option, 1);
+      switch (optionName) {
+        case "tokenVocab":
+          var grammar = loadAntlr4Grammar(imports, optionValue);
+          imports.add(grammar);
+          importGrammar(grammar, builder);
+          break;
+        case "superClass":
+          //Ignore
+          break;
+        default:
+          throw new IllegalStateException("Unexpected option: " + optionName + "=" + optionValue);
+      }
+    }
+  }
+
+  private Grammar loadAntlr4Grammar(Collection<Grammar> imports, String optionValue) {
+    String fileName = Path.of(currentWorkingDirectory, optionValue + ".g4").toAbsolutePath().toString();
+    org.antlr.v4.tool.Grammar antlr4Grammar = new Tool().loadGrammar(fileName);
+    var visitor = new LangiumGeneratingVisitor(currentWorkingDirectory);
+    var grammar = visitor.generate(antlr4Grammar.ast, imports);
+    return grammar;
+  }
+
   private void importGrammar(Grammar i, GrammarBuilder builder) {
     builder.importing(i);
     for (String name : i.namingService.allNames()) {
@@ -195,6 +225,16 @@ public class LangiumGeneratingVisitor {
   private RuleExpression readAlternative(RuleBuilder ruleBuilder, AltAST alt) {
     return new SequenceRuleExpression(alt.getChildren().stream().map(c -> (GrammarAST) c).map(child -> {
       switch (child.getClass().getSimpleName()) {
+        case "RangeAST": {
+          var left = expectChildName(child, 0);
+          var right = expectChildName(child, 1);
+          assert left.startsWith("'");
+          assert right.startsWith("'");
+          return new RangeExpression(
+            new KeywordExpression(left.substring(1, left.length()-1)),
+            new KeywordExpression(right.substring(1, right.length()-1))
+          );
+        }
         case "BlockAST": {
           return this.readBlock(ruleBuilder, child, false);
         }
