@@ -8,11 +8,14 @@ import java.util.List;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Stream;
 
 import org.antlr.runtime.tree.CommonTree;
 import org.antlr.v4.tool.ast.GrammarRootAST;
+import org.antlr.v4.tool.ast.RangeAST;
 import org.antlr.v4.tool.ast.RuleAST;
 import org.antlr.v4.tool.ast.SetAST;
+import org.antlr.v4.tool.ast.TerminalAST;
 import org.antlr.v4.Tool;
 import org.antlr.v4.tool.ast.AltAST;
 import org.antlr.v4.tool.ast.BlockAST;
@@ -37,22 +40,70 @@ import org.langium.antlr.model.SequenceRuleExpression;
 
 public class LangiumGeneratingVisitor {
 
-  public static final String NL = System.lineSeparator();
   private NamingService namingService;
-  private String currentWorkingDirectory;
+  private Map<String, Grammar> grammarMap = new HashMap<String, Grammar>();
+  private Map<String, String> errorMap = new HashMap<String, String>();
+  private String workingDirectory;
+  private Pattern UnicodePattern = Pattern.compile("^\\\\u[0-9A-Fa-f]{4}$");
 
-  public LangiumGeneratingVisitor(String currentWorkingDirectory) {
+  public LangiumGeneratingVisitor(String workingDirectory) {
     super();
-    this.currentWorkingDirectory = currentWorkingDirectory;
+    this.workingDirectory = workingDirectory;
+    namingService = new NamingServiceImpl();
   }
 
-public Grammar generate(GrammarRootAST root, Collection<Grammar> imports) {
-    namingService = new NamingServiceImpl();
-    var grammar = readGrammarRoot(root, imports);
-    if (grammar.grammarKind == RuleKind.Parser) {
-      addActions(grammar);
-      addAssignments(grammar);
+  public List<GrammarFile> toLangium(org.antlr.v4.tool.Grammar grammar) {
+    var errors = errorMap.entrySet().stream().map(g -> new GrammarFile(g.getKey()+".error.xml", g.getValue()));
+    try {
+      generate(grammar);
+      var output = grammarMap.values().stream().map(g -> new GrammarFile(g.name+".langium", g.print(0)));
+      return Stream.concat(output, errors).toList();
+    } catch(Exception e) {
+      return errors.toList();
     }
+  }
+
+  private Grammar generate(org.antlr.v4.tool.Grammar grammar) {
+    Grammar lexerGrammar = null;
+    if (grammar.implicitLexer != null && grammar.implicitLexer.ast != null) {
+        lexerGrammar = generate(grammar.implicitLexer.ast);
+    }
+    Grammar parserGrammar = generate(grammar.ast);
+    if(lexerGrammar != null) {
+      parserGrammar.imports.add(lexerGrammar);
+    }
+    return parserGrammar;
+  }
+
+  private Grammar generate(GrammarRootAST root) {
+    var name = expectChildName(root, 0);
+    var astMaker = new AST2XMLGenerator();
+    var tree = astMaker.generate(root);
+    errorMap.put(name, tree);
+    try {
+      var grammar = readGrammarRoot(root);
+      if (grammar.grammarKind == RuleKind.Parser) {
+        addActions(grammar);
+        addAssignments(grammar);
+      }
+      return grammar;
+    } catch(Exception e) {
+      errorMap.remove(name);
+      errorMap.put(name, e.getMessage()+"\n"+tree);
+      e.printStackTrace();
+      throw e;
+    }
+  }
+
+  private Grammar importFromFile(String grammarName) {
+    if(grammarMap.containsKey(grammarName)) {
+      return grammarMap.get(grammarName);
+    }
+    var path = Path.of(workingDirectory, grammarName+".g4");
+    var app = new Tool(new String[0]);
+    var antlrGrammar = app.loadGrammar(path.toString());
+    var grammar = generate(antlrGrammar);
+    grammarMap.put(grammarName, grammar);
     return grammar;
   }
 
@@ -74,61 +125,60 @@ public Grammar generate(GrammarRootAST root, Collection<Grammar> imports) {
 
   }
 
-  private Grammar readGrammarRoot(GrammarRootAST root, Collection<Grammar> imports) {
+  private Grammar readGrammarRoot(GrammarRootAST root) {
     var grammarKindText = root.getText();
     var isLexer = grammarKindText.equals("LEXER_GRAMMAR");
     GrammarBuilder builder = new GrammarBuilderImpl(namingService, isLexer ? RuleKind.Lexer : RuleKind.Parser);
 
-    builder.name(expectChildName(root, 0));
+    String grammarName = expectChildName(root, 0);
+    builder.name(grammarName);
 
-    if (imports != null) {
-      imports.forEach(i -> {
-        importGrammar(i, builder);
-      });
-    }
-
-    for(int index=1; index < root.getChildCount(); index++) {
-      var child = (GrammarAST)root.getChild(index);
+    for (int index = 1; index < root.getChildCount(); index++) {
+      var child = (GrammarAST) root.getChild(index);
       var childType = child.getText();
-      switch(childType) {
+      switch (childType) {
         case "OPTIONS":
-          parseGrammarOptions(imports, builder, child);
+          parseGrammarOptions(builder, child);
           break;
         case "import":
           var name = expectChildName(child, 0);
-          var grammar = loadAntlr4Grammar(imports, name);
-          imports.add(grammar);
-          importGrammar(grammar, builder);
+          var next = importFromFile(name);
+          builder.importing(next);
           break;
         case "tokens {":
           for (var token : expectChildrenOfType(child)) {
             var tokenText = token.getText();
-            if(!namingService.has(tokenText)) {
+            if (!namingService.has(tokenText)) {
               namingService.add(tokenText, tokenText);
-            }            
+            }
           }
           break;
         case "channels {":
-          //Ignore
+          // Ignore
           break;
         case "RULES":
-          return getRules(isLexer, builder, child);
+          getRules(isLexer, builder, child);
+          break;
         case "mode":
           var modeName = expectChildName(child, 0);
-          return getRules(isLexer, builder, (GrammarAST)child.getChild(1), modeName);
+          getRules(isLexer, builder, (GrammarAST) child, modeName);
+          break;
         default:
           throw new IllegalStateException("Unexpected grammar child: " + childType);
       }
     }
-    throw new IllegalStateException("Unexpected ending");
+
+    var result = builder.build();
+    grammarMap.put(result.name, result);
+    return result;
   }
 
-  private Grammar getRules(boolean isLexer, GrammarBuilder builder, GrammarAST rulesNode) {
-    return getRules(isLexer, builder, rulesNode, null);
+  private void getRules(boolean isLexer, GrammarBuilder builder, GrammarAST rulesNode) {
+    getRules(isLexer, builder, rulesNode, null);
   }
 
-  private Grammar getRules(boolean isLexer, GrammarBuilder builder, GrammarAST rulesNode, String modeName) {
-    Iterable<RuleAST> rules = this.expectChildrenOfType(rulesNode);
+  private void getRules(boolean isLexer, GrammarBuilder builder, GrammarAST rulesNode, String modeName) {
+    Iterable<RuleAST> rules = this.expectChildrenOfType(rulesNode, 1);
     boolean hasStartRule = isLexer; // lexer grammar has no entry rule!
     Map<RuleAST, RuleBuilder> ruleBuilders = new HashMap<RuleAST, RuleBuilder>();
     for (RuleAST rule : rules) {
@@ -174,41 +224,23 @@ public Grammar generate(GrammarRootAST root, Collection<Grammar> imports) {
           .body(body)
           .end();
     }
-    return builder.build();
   }
 
-  private void parseGrammarOptions(Collection<Grammar> imports, GrammarBuilder builder, GrammarAST node) {
+  private void parseGrammarOptions(GrammarBuilder builder, GrammarAST node) {
     Collection<GrammarAST> options = expectChildrenOfType(node);
     for (GrammarAST option : options) {
       var optionName = expectChildName(option, 0);
       var optionValue = expectChildName(option, 1);
       switch (optionName) {
         case "tokenVocab":
-          var grammar = loadAntlr4Grammar(imports, optionValue);
-          imports.add(grammar);
-          importGrammar(grammar, builder);
+          builder.importing(importFromFile(optionValue));
           break;
         case "superClass":
-          //Ignore
+          // Ignore
           break;
         default:
           throw new IllegalStateException("Unexpected option: " + optionName + "=" + optionValue);
       }
-    }
-  }
-
-  private Grammar loadAntlr4Grammar(Collection<Grammar> imports, String optionValue) {
-    String fileName = Path.of(currentWorkingDirectory, optionValue + ".g4").toAbsolutePath().toString();
-    org.antlr.v4.tool.Grammar antlr4Grammar = new Tool().loadGrammar(fileName);
-    var visitor = new LangiumGeneratingVisitor(currentWorkingDirectory);
-    var grammar = visitor.generate(antlr4Grammar.ast, imports);
-    return grammar;
-  }
-
-  private void importGrammar(Grammar i, GrammarBuilder builder) {
-    builder.importing(i);
-    for (String name : i.namingService.allNames()) {
-      namingService.add(name, i.namingService.get(name));
     }
   }
 
@@ -235,14 +267,7 @@ public Grammar generate(GrammarRootAST root, Collection<Grammar> imports) {
     return new SequenceRuleExpression(alt.getChildren().stream().map(c -> (GrammarAST) c).map(child -> {
       switch (child.getClass().getSimpleName()) {
         case "RangeAST": {
-          var left = expectChildName(child, 0);
-          var right = expectChildName(child, 1);
-          assert left.startsWith("'");
-          assert right.startsWith("'");
-          return new RangeExpression(
-            new KeywordExpression(left.substring(1, left.length()-1)),
-            new KeywordExpression(right.substring(1, right.length()-1))
-          );
+          return readRange((RangeAST)child);
         }
         case "BlockAST": {
           return this.readBlock(ruleBuilder, child, false);
@@ -263,29 +288,40 @@ public Grammar generate(GrammarRootAST root, Collection<Grammar> imports) {
           return new QuantifierExpression(QuantifierKind.Optional, expression);
         }
         case "TerminalAST": {
-          var text = child.getText();
-          if (text.startsWith("\'")) {
-            text = text.substring(1, text.length() - 1);
-            return new KeywordExpression(text);
-          }
-          if (text.equals("EOF")) {
-            return null;
-          }
-          if (text.equals(".")) {
-            return new RegexRuleExpression(text);
-          }
-          return new RuleCallExpression(namingService, text);
+          return readTerminal((TerminalAST)child);
         }
         case "RuleRefAST":
           return new RuleCallExpression(namingService, child.getText());
         case "GrammarAST": {
           var text = child.getText();
+          if(text == "SET") {
+            List<RuleExpression> expressions = new LinkedList<RuleExpression>();
+            for (var ast : child.getChildren()) {
+              RuleExpression expression = null;
+              switch(ast.getClass().getSimpleName()) {
+                case "RangeAST": {
+                  expression = readRange((RangeAST)ast);
+                  break;
+                }
+                case "TerminalAST": {
+                  expression = readTerminal((TerminalAST)ast);
+                  break;
+                }
+                default:
+                  throw new RuntimeException("Unexpected child: " + ast.getClass().getSimpleName() + " text='" + ((CommonTree)ast).getText());
+              }
+              if(expression != null) {
+                expressions.add(expression);
+              }
+            }
+            return new AlternativesRuleExpression(expressions, false);
+          }
           return new RegexRuleExpression(text);
         }
         case "NotAST": {
           SetAST set = expectNamedChild(child, 0, "SET");
           String regex = expectChildName(set, 0);
-          return new RegexRuleExpression(regex);
+          return new RegexRuleExpression("("+regex+")");
         }
         case "PredAST":
         case "ActionAST": {
@@ -296,6 +332,31 @@ public Grammar generate(GrammarRootAST root, Collection<Grammar> imports) {
               + " text='" + child.getText() + "' (line " + child.getLine() + ")");
       }
     }).filter(c -> c != null).toList());
+  }
+
+  private RuleExpression readTerminal(TerminalAST child) {
+    var text = child.getText();
+    if (text.startsWith("\'")) {
+      text = text.substring(1, text.length() - 1);
+      var matcher = this.UnicodePattern.matcher(text);
+      if(matcher.find()) {
+        text = text.substring(0, 4) + "\\u"+ text.substring(4, 6);
+      }
+      return new KeywordExpression(text);
+    }
+    if (text.equals("EOF")) {
+      return null;
+    }
+    if (text.equals(".")) {
+      return new RegexRuleExpression(text);
+    }
+    return new RuleCallExpression(namingService, text);
+  }
+
+  private RuleExpression readRange(RangeAST child) {
+    var left = readTerminal((TerminalAST)child.getChild(0));
+    var right = readTerminal((TerminalAST)child.getChild(1));
+    return new RangeExpression(left, right);
   }
 
   public static boolean isValidIdentifier(String identifier) {
@@ -322,9 +383,13 @@ public Grammar generate(GrammarRootAST root, Collection<Grammar> imports) {
     }
     return result;
   }
-
+  
   private <T extends CommonTree> Collection<T> expectChildrenOfType(CommonTree node) {
-    var children = node.getChildren().stream().map(c -> {
+    return expectChildrenOfType(node, 0);
+  }
+
+  private <T extends CommonTree> Collection<T> expectChildrenOfType(CommonTree node, int skipItems) {
+    var children = node.getChildren().stream().skip(skipItems).map(c -> {
       @SuppressWarnings("unchecked")
       var casted = (T) c;
       return casted;

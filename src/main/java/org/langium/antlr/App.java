@@ -4,10 +4,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.LinkedList;
-import java.util.List;
 import org.antlr.v4.Tool;
-import org.langium.antlr.model.Grammar;
 
 public class App extends Tool {
     public static void main(String[] args) {
@@ -22,7 +19,8 @@ public class App extends Tool {
         String langiumGrammarFolder = args[1];
         try {
             org.antlr.v4.tool.Grammar grammar = app.loadGrammar(antlrGrammarFile);
-            var files = app.toLangium(grammar);
+            LangiumGeneratingVisitor visitor = new LangiumGeneratingVisitor(Path.of(grammar.fileName).getParent().toString());
+            var files = visitor.toLangium(grammar);
             for (GrammarFile file : files) {
                 var path = Paths.get(langiumGrammarFolder, file.name);
                 Files.writeString(path, file.content);
@@ -31,36 +29,5 @@ public class App extends Tool {
             System.err.println("Error: " + e.getMessage());
             System.exit(1);
         }
-    }
-
-    public GrammarFile[] toLangium(org.antlr.v4.tool.Grammar grammar) {
-        LangiumGeneratingVisitor visitor = new LangiumGeneratingVisitor(
-                Path.of(grammar.fileName).getParent().toString());
-        List<GrammarFile> result = new LinkedList<GrammarFile>();
-        List<Grammar> grammars = new LinkedList<Grammar>();
-        if (grammar.implicitLexer != null && grammar.implicitLexer.ast != null) {
-            try {
-                var lexerGrammar = visitor.generate(grammar.implicitLexer.ast, new LinkedList<Grammar>());
-                grammars.add(lexerGrammar);
-                result.add(new GrammarFile(lexerGrammar.name + ".langium", lexerGrammar.print(0)));
-            } catch (Exception e) {
-                AST2XMLGenerator xmlGenerator = new AST2XMLGenerator();
-                var fileContent = xmlGenerator.generate(grammar.implicitLexer.ast);
-                e.printStackTrace();
-                result.add(new GrammarFile(grammar.name + ".lexer.error",
-                        e.getMessage() + "\n" + e.getStackTrace() + fileContent));
-            }
-        }
-        try {
-            Grammar parserGrammar = visitor.generate(grammar.ast, grammars);
-            result.add(new GrammarFile(parserGrammar.name + ".langium", parserGrammar.print(0)));
-        } catch (Exception e) {
-            AST2XMLGenerator xmlGenerator = new AST2XMLGenerator();
-            var fileContent = xmlGenerator.generate(grammar.ast);
-            e.printStackTrace();
-            result.add(new GrammarFile(grammar.name + ".parser.error",
-                    e.getMessage() + "\n" + e.getStackTrace() + fileContent));
-        }
-        return result.toArray(new GrammarFile[0]);
     }
 }

@@ -15,7 +15,7 @@ public class Rule implements Printable {
 
     public Rule(NamingService namingService, RuleKind kind, String name, RuleExpression body, Collection<RuleModifier> modifiers) {
         this.namingService = namingService;
-        namingService.add(name, kind == RuleKind.Parser ? Utilities.capitalize(name) : Utilities.toUpperCase(name));
+        namingService.add(name, kind == RuleKind.Parser ? Utilities.capitalize(name) : (modifiers.contains(RuleModifier.fragment) ? "_" : "") + Utilities.toUpperCase(name));
         this.name = name;
         this.kind = kind;
         this.body = body;
@@ -27,7 +27,7 @@ public class Rule implements Printable {
         if(kind == RuleKind.Lexer) {
             String comment = "";
             if(LexerMode != null) {
-                comment = "/** @mode " + LexerMode + "\n";
+                comment = "/** @mode " + LexerMode + " */\n";
             }
             String fragment = "terminal ";
             if(modifiers.contains(RuleModifier.fragment)) {
