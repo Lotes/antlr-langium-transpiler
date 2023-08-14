@@ -1,8 +1,10 @@
 package org.langium.antlr.model;
 
 import java.util.Collection;
+import java.util.List;
+import java.util.stream.Stream;
 
-public class Grammar implements Printable {
+public class Grammar implements Printable, LangiumAST {
     public final String name;
     public final Collection<Rule> rules;
     public final RuleKind grammarKind;
@@ -34,5 +36,10 @@ public class Grammar implements Printable {
             sb.append(rule.print(indent)).append("\n\n");
         }
         return sb.toString();
+    }
+
+    @Override
+    public List<LangiumAST> getChildren() {
+        return Stream.concat(imports.stream(), rules.stream()).map(i -> (LangiumAST)i).toList();
     }
 }

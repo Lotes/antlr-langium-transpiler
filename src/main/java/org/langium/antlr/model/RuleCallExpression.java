@@ -1,5 +1,8 @@
 package org.langium.antlr.model;
 
+import java.util.LinkedList;
+import java.util.List;
+
 public class RuleCallExpression extends RuleExpression {
     public final String ruleName;
     
@@ -20,5 +23,10 @@ public class RuleCallExpression extends RuleExpression {
             assignment = assignmentVariable + assignmentOperator.getSymbol();
         }
         return assignment+namingService.get(ruleName);
+    }
+
+    @Override
+    public List<LangiumAST> getChildren() {
+        return new LinkedList<LangiumAST>();
     }
 }

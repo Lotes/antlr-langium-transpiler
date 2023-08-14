@@ -18,4 +18,9 @@ public class SequenceRuleExpression extends RuleExpression {
     public String print(final int indent) {
         return this.children.stream().map(c -> c.print(0)).collect(Collectors.joining(" "));
     }
+
+    @Override
+    public List<LangiumAST> getChildren() {
+        return this.children.stream().map(i -> (LangiumAST)i).toList();
+    }
 }

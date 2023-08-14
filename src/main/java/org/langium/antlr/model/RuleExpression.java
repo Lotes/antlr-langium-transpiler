@@ -1,4 +1,4 @@
 package org.langium.antlr.model;
 
-public abstract class RuleExpression implements Printable {}
+public abstract class RuleExpression implements Printable, LangiumAST {}
 

@@ -1,5 +1,8 @@
 package org.langium.antlr.model;
 
+import java.util.LinkedList;
+import java.util.List;
+
 public class NegationExpression extends RuleExpression {
     public final RuleExpression expression;
 
@@ -11,6 +14,13 @@ public class NegationExpression extends RuleExpression {
     @Override
     public String print(int indent) {
         return "!"+expression.print(0);
+    }
+
+    @Override
+    public List<LangiumAST> getChildren() {
+        var list = new LinkedList<LangiumAST>();
+        list.add(expression);
+        return list;
     }
     
 }

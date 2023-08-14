@@ -1,5 +1,8 @@
 package org.langium.antlr.model;
 
+import java.util.LinkedList;
+import java.util.List;
+
 public class RegexRuleExpression extends RuleExpression {
     public final String pattern;
 
@@ -10,5 +13,10 @@ public class RegexRuleExpression extends RuleExpression {
     @Override
     public String print(int indent) {
         return "/"+pattern+"/";
+    }
+
+   @Override
+    public List<LangiumAST> getChildren() {
+        return new LinkedList<LangiumAST>();
     }
 }

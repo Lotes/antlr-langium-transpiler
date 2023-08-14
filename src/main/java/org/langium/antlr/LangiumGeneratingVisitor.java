@@ -37,6 +37,8 @@ import org.langium.antlr.model.RuleExpression;
 import org.langium.antlr.model.RuleKind;
 import org.langium.antlr.model.RuleModifier;
 import org.langium.antlr.model.SequenceRuleExpression;
+import org.langium.antlr.transformers.Transformer;
+import org.langium.antlr.transformers.Transformers;
 
 public class LangiumGeneratingVisitor {
 
@@ -44,7 +46,6 @@ public class LangiumGeneratingVisitor {
   private Map<String, Grammar> grammarMap = new HashMap<String, Grammar>();
   private Map<String, String> errorMap = new HashMap<String, String>();
   private String workingDirectory;
-  private Pattern UnicodePattern = Pattern.compile("^\\\\u[0-9A-Fa-f]{4}$");
 
   public LangiumGeneratingVisitor(String workingDirectory) {
     super();
@@ -82,9 +83,10 @@ public class LangiumGeneratingVisitor {
     errorMap.put(name, tree);
     try {
       var grammar = readGrammarRoot(root);
-      if (grammar.grammarKind == RuleKind.Parser) {
-        addActions(grammar);
-        addAssignments(grammar);
+      for (Transformer transformer : Transformers.list) {
+        if(transformer.canTransform(grammar)) {
+          transformer.transform(grammar);
+        }
       }
       return grammar;
     } catch(Exception e) {
@@ -105,24 +107,6 @@ public class LangiumGeneratingVisitor {
     var grammar = generate(antlrGrammar);
     grammarMap.put(grammarName, grammar);
     return grammar;
-  }
-
-  private void addActions(Grammar grammar) {
-    /*
-     * for (Rule rule : grammar.rules.stream().filter(r -> r.body instanceof
-     * AlternativesRuleExpression).toList()) {
-     * var alternatives = (AlternativesRuleExpression)rule.body;
-     * if(alternatives.children.size() > 1) {
-     * for (var alt : alternatives.children) {
-     * 
-     * }
-     * }
-     * }
-     */
-  }
-
-  private void addAssignments(Grammar grammar) {
-
   }
 
   private Grammar readGrammarRoot(GrammarRootAST root) {
@@ -338,10 +322,6 @@ public class LangiumGeneratingVisitor {
     var text = child.getText();
     if (text.startsWith("\'")) {
       text = text.substring(1, text.length() - 1);
-      var matcher = this.UnicodePattern.matcher(text);
-      if(matcher.find()) {
-        text = text.substring(0, 4) + "\\u"+ text.substring(4, 6);
-      }
       return new KeywordExpression(text);
     }
     if (text.equals("EOF")) {

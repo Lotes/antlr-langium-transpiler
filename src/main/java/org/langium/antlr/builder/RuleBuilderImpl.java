@@ -28,8 +28,7 @@ public class RuleBuilderImpl implements RuleBuilder {
 
     @Override
     public Rule end() {
-        var rule = new Rule(parent.namingService, kind, name, body, modifiers);
-        rule.LexerMode = modeName;
+        var rule = new Rule(parent.namingService, kind, name, body, modifiers, modeName);
         parent.rules.add(rule);
         return rule;
     }

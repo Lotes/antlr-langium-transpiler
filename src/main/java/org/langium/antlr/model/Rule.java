@@ -1,33 +1,58 @@
 package org.langium.antlr.model;
 
 import java.util.Collection;
+import java.util.LinkedList;
+import java.util.List;
 
-public class Rule implements Printable {
+import org.langium.antlr.Utilities;
+
+public class Rule implements Printable, LangiumAST {
     public final String name;
     public final RuleKind kind;
     public final RuleExpression body;
     public final Collection<RuleModifier> modifiers;
-    public String LexerMode = null;
+    public final String mode;
+    public final ModeAction action = null;
     private NamingService namingService;
     public String getLangiumName() {
         return namingService.get(name);
     }
 
     public Rule(NamingService namingService, RuleKind kind, String name, RuleExpression body, Collection<RuleModifier> modifiers) {
+        this(namingService, kind, name, body, modifiers, null);
+    }
+
+    public Rule(NamingService namingService, RuleKind kind, String name, RuleExpression body, Collection<RuleModifier> modifiers, String mode) {
         this.namingService = namingService;
-        namingService.add(name, kind == RuleKind.Parser ? Utilities.capitalize(name) : (modifiers.contains(RuleModifier.fragment) ? "_" : "") + Utilities.toUpperCase(name));
         this.name = name;
         this.kind = kind;
         this.body = body;
         this.modifiers = modifiers;
+        this.mode = mode;
+        String actualName = buildName(name);
+        namingService.add(name, actualName);
+    }
+
+    private String buildName(String name) {
+        if(kind == RuleKind.Parser) {
+            return Utilities.capitalize(name);
+        }
+        var upper = Utilities.toUpperCase(name);
+        if(modifiers.contains(RuleModifier.fragment)) {
+            return "_" + upper;
+        } 
+        if(mode != null) {
+            return mode + "__" + upper;
+        }
+        return upper;
     }
 
     @Override
     public String print(int indent) {
         if(kind == RuleKind.Lexer) {
             String comment = "";
-            if(LexerMode != null) {
-                comment = "/** @mode " + LexerMode + " */\n";
+            if(mode != null) {
+                comment = "/** @mode " + mode + " */\n";
             }
             String fragment = "terminal ";
             if(modifiers.contains(RuleModifier.fragment)) {
@@ -44,5 +69,12 @@ public class Rule implements Printable {
             }            
             return entry + getLangiumName() + ": "+body.print(0) + ";";
         }
+    }
+
+   @Override
+    public List<LangiumAST> getChildren() {
+        var list = new LinkedList<LangiumAST>();
+        list.add(body);
+        return list;
     }
 }

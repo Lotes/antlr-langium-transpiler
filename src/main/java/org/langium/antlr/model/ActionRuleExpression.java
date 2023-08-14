@@ -1,6 +1,9 @@
 package org.langium.antlr.model;
 
-public class ActionRuleExpression implements Printable {
+import java.util.LinkedList;
+import java.util.List;
+
+public class ActionRuleExpression implements Printable, LangiumAST {
     public static class CurrentAssignment {
         public final String propertyName;
         public final AssigmentOperator assigmentOperator;
@@ -26,5 +29,9 @@ public class ActionRuleExpression implements Printable {
         }
         sb.append("}");
         return sb.toString();
+    }
+    @Override
+    public List<LangiumAST> getChildren() {
+        return new LinkedList<LangiumAST>();
     }
 }
