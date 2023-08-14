@@ -7,6 +7,7 @@ public class Rule implements Printable {
     public final RuleKind kind;
     public final RuleExpression body;
     public final Collection<RuleModifier> modifiers;
+    public String LexerMode = null;
     private NamingService namingService;
     public String getLangiumName() {
         return namingService.get(name);
@@ -24,6 +25,10 @@ public class Rule implements Printable {
     @Override
     public String print(int indent) {
         if(kind == RuleKind.Lexer) {
+            String comment = "";
+            if(LexerMode != null) {
+                comment = "/** @mode " + LexerMode + "\n";
+            }
             String fragment = "terminal ";
             if(modifiers.contains(RuleModifier.fragment)) {
                 fragment += "fragment ";
@@ -31,7 +36,7 @@ public class Rule implements Printable {
             if(modifiers.contains(RuleModifier.hidden)) {
                 fragment = "hidden " + fragment;
             }
-            return fragment + getLangiumName() + ": "+body.print(0)+";";
+            return comment + fragment + getLangiumName() + ": "+body.print(0)+";";
         } else {
             String entry = "";
             if(modifiers.contains(RuleModifier.entry)) {

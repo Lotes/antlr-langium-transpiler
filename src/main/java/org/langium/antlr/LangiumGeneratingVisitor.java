@@ -40,27 +40,20 @@ public class LangiumGeneratingVisitor {
   public static final String NL = System.lineSeparator();
   private NamingService namingService;
   private String currentWorkingDirectory;
-  private AST2XMLGenerator xmlGenerator = new AST2XMLGenerator();
 
   public LangiumGeneratingVisitor(String currentWorkingDirectory) {
     super();
     this.currentWorkingDirectory = currentWorkingDirectory;
   }
 
-  public Grammar generate(GrammarRootAST root, Collection<Grammar> imports) {
-    try {
-      namingService = new NamingServiceImpl();
-      var grammar = readGrammarRoot(root, imports);
-      if (grammar.grammarKind == RuleKind.Parser) {
-        addActions(grammar);
-        addAssignments(grammar);
-      }
-      return grammar;
-    } catch (Exception e) {
-      var fileContent = xmlGenerator.generate(root);
-      e.printStackTrace();
-      throw new IllegalStateException("Error: " + e.getMessage()+"\n"+fileContent, e);
+public Grammar generate(GrammarRootAST root, Collection<Grammar> imports) {
+    namingService = new NamingServiceImpl();
+    var grammar = readGrammarRoot(root, imports);
+    if (grammar.grammarKind == RuleKind.Parser) {
+      addActions(grammar);
+      addAssignments(grammar);
     }
+    return grammar;
   }
 
   private void addActions(Grammar grammar) {
@@ -94,7 +87,6 @@ public class LangiumGeneratingVisitor {
       });
     }
 
-    GrammarAST rulesNode = null;
     for(int index=1; index < root.getChildCount(); index++) {
       var child = (GrammarAST)root.getChild(index);
       var childType = child.getText();
@@ -108,17 +100,34 @@ public class LangiumGeneratingVisitor {
           imports.add(grammar);
           importGrammar(grammar, builder);
           break;
-        case "channels {":
         case "tokens {":
+          for (var token : expectChildrenOfType(child)) {
+            var tokenText = token.getText();
+            if(!namingService.has(tokenText)) {
+              namingService.add(tokenText, tokenText);
+            }            
+          }
+          break;
+        case "channels {":
           //Ignore
           break;
         case "RULES":
-          rulesNode = child;
-          break;
+          return getRules(isLexer, builder, child);
+        case "mode":
+          var modeName = expectChildName(child, 0);
+          return getRules(isLexer, builder, (GrammarAST)child.getChild(1), modeName);
         default:
           throw new IllegalStateException("Unexpected grammar child: " + childType);
       }
     }
+    throw new IllegalStateException("Unexpected ending");
+  }
+
+  private Grammar getRules(boolean isLexer, GrammarBuilder builder, GrammarAST rulesNode) {
+    return getRules(isLexer, builder, rulesNode, null);
+  }
+
+  private Grammar getRules(boolean isLexer, GrammarBuilder builder, GrammarAST rulesNode, String modeName) {
     Iterable<RuleAST> rules = this.expectChildrenOfType(rulesNode);
     boolean hasStartRule = isLexer; // lexer grammar has no entry rule!
     Map<RuleAST, RuleBuilder> ruleBuilders = new HashMap<RuleAST, RuleBuilder>();
@@ -128,7 +137,7 @@ public class LangiumGeneratingVisitor {
         continue;
       }
 
-      var ruleBuilder = builder.beginRule(isLexer ? RuleKind.Lexer : RuleKind.Parser);
+      var ruleBuilder = builder.beginRule(isLexer ? RuleKind.Lexer : RuleKind.Parser).mode(modeName);
 
       if (!hasStartRule) {
         ruleBuilder.setModifier(RuleModifier.entry);

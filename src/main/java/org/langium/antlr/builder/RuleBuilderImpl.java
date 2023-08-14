@@ -14,6 +14,7 @@ public class RuleBuilderImpl implements RuleBuilder {
     private RuleKind kind;
     private RuleExpression body;
     private List<RuleModifier> modifiers = new LinkedList<RuleModifier>();
+    private String modeName = null;
 
     public RuleBuilderImpl(GrammarBuilderImpl parent, RuleKind kind) {
         this.parent = parent;
@@ -28,6 +29,7 @@ public class RuleBuilderImpl implements RuleBuilder {
     @Override
     public Rule end() {
         var rule = new Rule(parent.namingService, kind, name, body, modifiers);
+        rule.LexerMode = modeName;
         parent.rules.add(rule);
         return rule;
     }
@@ -44,4 +46,9 @@ public class RuleBuilderImpl implements RuleBuilder {
         return this;
     }
 
+    @Override
+    public RuleBuilder mode(String modeName) {
+        this.modeName = modeName;
+        return this;
+    }
 }

@@ -25,6 +25,7 @@ public class Grammar implements Printable {
         }
         if (!imports.isEmpty()) {
             for (Grammar string : imports) {
+                System.out.println("> importing "+string);
                 sb.append("import \"").append(string.name).append("\"\n");
             }
             sb.append("\n");
