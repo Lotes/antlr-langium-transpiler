@@ -42,7 +42,7 @@ public class UnicodeLiteralsSplitter implements Transformer {
             var right = ((KeywordExpression) range.right).text;
 
             if (UnicodePattern.test(left) && UnicodePattern.test(right)) {
-                var regex = new RegexRuleExpression("["+left+"-"+right+"]");
+                var regex = new RegexRuleExpression("["+left+"-"+right+"]", "u");
                 Utilities.replace(r.parent, r.child, List.of(regex));
             }
         });
