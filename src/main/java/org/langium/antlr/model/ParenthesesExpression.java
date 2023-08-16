@@ -1,23 +1,22 @@
 package org.langium.antlr.model;
 
-import java.util.LinkedList;
 import java.util.List;
 
-public class KeywordExpression extends RuleExpression {
-    public final String text;
+public class ParenthesesExpression extends RuleExpression {
+    public RuleExpression expression;
 
-    public KeywordExpression(String text) {
-        this.text = text;
+    public ParenthesesExpression(RuleExpression expression) {
+        this.expression = expression;
     }
 
     @Override
     public String print(int indent) {
-        return "'"+ text + "'";
+        return "("+expression.print(0)+")";
     }
 
     @Override
     public List<LangiumAST> getChildren() {
-        return new LinkedList<LangiumAST>();
+        return List.of(expression);
     }
 
     @Override

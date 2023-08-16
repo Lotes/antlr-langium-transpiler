@@ -5,7 +5,7 @@ import java.util.List;
 
 public class QuantifierExpression extends RuleExpression {
     public final QuantifierKind kind;
-    public final RuleExpression expression;
+    public RuleExpression expression;
 
     public QuantifierExpression(QuantifierKind kind, RuleExpression expression) {
         this.kind = kind;
@@ -22,5 +22,25 @@ public class QuantifierExpression extends RuleExpression {
         var list = new LinkedList<LangiumAST>();
         list.add(expression);
         return list;
+    }
+    @Override
+    public int removeChild(LangiumAST child) {
+        throw new UnsupportedOperationException("Unimplemented method 'removeChild'");
+    }
+
+    @Override
+    public void insertChild(LangiumAST child, int index) {
+        throw new UnsupportedOperationException("Unimplemented method 'insertChild'");
+    }
+
+    @Override
+    public int replaceChild(LangiumAST oldChild, LangiumAST newChild) {
+        if(newChild instanceof RuleExpression) {
+            if(oldChild == expression) {
+                expression = (RuleExpression) newChild;
+                return 0;
+            }
+        }
+        throw new UnsupportedOperationException("Unimplemented method 'replaceChild'");
     }
 }

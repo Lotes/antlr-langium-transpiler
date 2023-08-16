@@ -28,6 +28,7 @@ import org.langium.antlr.model.Grammar;
 import org.langium.antlr.model.KeywordExpression;
 import org.langium.antlr.model.NamingService;
 import org.langium.antlr.model.NamingServiceImpl;
+import org.langium.antlr.model.ParenthesesExpression;
 import org.langium.antlr.model.QuantifierExpression;
 import org.langium.antlr.model.QuantifierKind;
 import org.langium.antlr.model.RangeExpression;
@@ -248,13 +249,13 @@ public class LangiumGeneratingVisitor {
   }
 
   private RuleExpression readAlternative(RuleBuilder ruleBuilder, AltAST alt) {
-    return new SequenceRuleExpression(alt.getChildren().stream().map(c -> (GrammarAST) c).map(child -> {
+    return new SequenceRuleExpression(new LinkedList<RuleExpression>(alt.getChildren().stream().map(c -> (GrammarAST) c).map(child -> {
       switch (child.getClass().getSimpleName()) {
         case "RangeAST": {
           return readRange((RangeAST)child);
         }
         case "BlockAST": {
-          return this.readBlock(ruleBuilder, child, false);
+          return new ParenthesesExpression(this.readBlock(ruleBuilder, child, false));
         }
         case "PlusBlockAST": {
           BlockAST block = expectNamedChild(child, 0, "BLOCK");
@@ -315,7 +316,7 @@ public class LangiumGeneratingVisitor {
           throw new IllegalStateException("Unexpected alternative child: " + child.getClass().getSimpleName()
               + " text='" + child.getText() + "' (line " + child.getLine() + ")");
       }
-    }).filter(c -> c != null).toList());
+    }).filter(c -> c != null).toList()));
   }
 
   private RuleExpression readTerminal(TerminalAST child) {

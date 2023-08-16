@@ -20,7 +20,6 @@ public class ModeAction implements LangiumAST {
     
     public static ModeAction PushMode = new ModeAction(ModeActionKind.PopMode, null, null);
 
-
     private ModeAction(ModeActionKind kind, String mode, String type) {
         this.kind = kind;
         this.mode = mode;
@@ -30,5 +29,17 @@ public class ModeAction implements LangiumAST {
     @Override
     public List<LangiumAST> getChildren() {
         return new LinkedList<LangiumAST>();
+    }
+    @Override
+    public int removeChild(LangiumAST child) {
+        throw new UnsupportedOperationException("Unimplemented method 'removeChild'");
+    }
+    @Override
+    public void insertChild(LangiumAST child, int index) {
+        throw new UnsupportedOperationException("Unimplemented method 'insertChild'");
+    }
+    @Override
+    public int replaceChild(LangiumAST oldChild, LangiumAST newChild) {
+        throw new UnsupportedOperationException("Unimplemented method 'replaceChild'");
     }
 }

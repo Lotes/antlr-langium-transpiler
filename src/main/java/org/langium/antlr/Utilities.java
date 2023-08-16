@@ -1,11 +1,26 @@
 package org.langium.antlr;
 
+import java.util.Collections;
+import java.util.List;
 import java.util.stream.Stream;
 
 import org.langium.antlr.model.LangiumAST;
 import org.langium.antlr.model.ParentChildPair;
 
 public class Utilities {
+    public static void replace(LangiumAST parent, LangiumAST child, List<LangiumAST> replacement) {
+        if (parent == null) {
+            return;
+        }
+        int index = parent.removeChild(child);
+        if (index >= 0) {
+            Collections.reverse(replacement);
+            for (LangiumAST ast : replacement) {
+                parent.insertChild(ast, index);
+            }
+        }
+    }
+
     public static String indent(int level) {
         StringBuilder sb = new StringBuilder();
         for (int i = 0; i < level; i++) {
@@ -27,6 +42,12 @@ public class Utilities {
     }
 
     private static Stream<ParentChildPair> streamAst(LangiumAST ast, LangiumAST parent) {
-        return Stream.of(new ParentChildPair(parent, ast)).flatMap(pc -> pc.child.getChildren().stream().flatMap(c -> streamAst(pc.child, c)));
+        var root = new ParentChildPair(parent, ast);
+        var children =  ast.getChildren().size() > 0 ? ast.getChildren().stream().flatMap(c -> streamAst(c, ast)) : null;
+        if(children != null) {
+            return Stream.concat(Stream.of(root), children);
+        } else {
+            return Stream.of(root);
+        }
     }
 }

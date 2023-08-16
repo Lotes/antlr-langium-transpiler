@@ -9,7 +9,7 @@ import org.langium.antlr.Utilities;
 public class Rule implements Printable, LangiumAST {
     public final String name;
     public final RuleKind kind;
-    public final RuleExpression body;
+    public RuleExpression body;
     public final Collection<RuleModifier> modifiers;
     public final String mode;
     public final ModeAction action = null;
@@ -76,5 +76,26 @@ public class Rule implements Printable, LangiumAST {
         var list = new LinkedList<LangiumAST>();
         list.add(body);
         return list;
+    }
+
+    @Override
+    public int removeChild(LangiumAST child) {
+        throw new UnsupportedOperationException("Unimplemented method 'removeChild'");
+    }
+
+    @Override
+    public void insertChild(LangiumAST child, int index) {
+        throw new UnsupportedOperationException("Unimplemented method 'insertChild'");
+    }
+
+    @Override
+    public int replaceChild(LangiumAST oldChild, LangiumAST newChild) {
+        if(newChild instanceof RuleExpression) {
+            if(oldChild == body) {
+                body = (RuleExpression) newChild;
+                return 0;
+            }
+        }
+        throw new UnsupportedOperationException("Unimplemented method 'replaceChild'");
     }
 }
