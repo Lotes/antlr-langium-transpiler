@@ -84,7 +84,7 @@ public class LangiumGeneratingVisitor {
     errorMap.put(name, tree);
     try {
       var grammar = readGrammarRoot(root);
-      for (Transformer transformer : Transformers.list) {
+      for (Transformer transformer : Transformers.createAll(namingService)) {
         if(transformer.canTransform(grammar)) {
           transformer.transform(grammar);
         }

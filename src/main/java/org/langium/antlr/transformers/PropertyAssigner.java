@@ -6,6 +6,7 @@ import org.langium.antlr.model.RuleCallExpression;
 import org.langium.antlr.model.RuleKind;
 
 public class PropertyAssigner implements Transformer {
+    private static final VariableNameExtractor variableNameExtractor = new VariableNameExtractor();
 
     @Override
     public boolean canTransform(Grammar grammar) {
@@ -15,7 +16,8 @@ public class PropertyAssigner implements Transformer {
     @Override
     public void transform(Grammar grammar) {
         Utilities.streamAst(grammar).filter(i -> i instanceof RuleCallExpression).forEach(r -> {
-           // ((RuleCallExpression)r).assignmentVariable = "name";
+            RuleCallExpression ruleCall = (RuleCallExpression) r;
+            ruleCall.assignmentVariable = variableNameExtractor.extractVariableName(ruleCall.ruleName);
         });
     }
 
