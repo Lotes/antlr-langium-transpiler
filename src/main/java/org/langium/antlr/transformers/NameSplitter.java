@@ -1,10 +1,11 @@
 package org.langium.antlr.transformers;
 
+import java.util.LinkedList;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public class VariableNameExtractor {
-    public String extractVariableName(String longName) {
+public class NameSplitter {
+    public String[] splitName(String longName) {
         Pattern pattern;
         if (longName.matches(".*[a-z].*")) {
             pattern = Pattern.compile("[A-Z_][a-z0-9_]*|^[a-z][a-z0-9_]*");
@@ -12,10 +13,11 @@ public class VariableNameExtractor {
             pattern = Pattern.compile("[A-Z][A-Z0-9]*");
         }
         Matcher matcher = pattern.matcher(longName);
-        String last = null;
+        LinkedList<String> names = new LinkedList<String>();
         while (matcher.find()) {
-            last = longName.substring(matcher.start(), matcher.end()).toLowerCase();
+            String name = longName.substring(matcher.start(), matcher.end()).toLowerCase();
+            names.add(name);
         }
-        return last;
+        return names.toArray(new String[0]);
     }
 }

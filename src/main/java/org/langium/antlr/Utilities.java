@@ -30,6 +30,9 @@ public class Utilities {
     }
 
     public static String capitalize(String name) {
+        if (name == null || name.length() == 0) {
+            return name;
+        }
         return name.substring(0, 1).toUpperCase() + name.substring(1);
     }
 
