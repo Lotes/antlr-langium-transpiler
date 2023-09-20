@@ -32,8 +32,8 @@ public class UnicodeLiteralsSplitter implements Transformer {
     }
 
     @Override
-    public void transform(Grammar grammar) {
-        Utilities.streamAst(grammar).filter(i -> i.child instanceof RangeExpression).forEach(r -> {
+    public void transform(Grammar grammar ) {
+       Utilities.streamAst(grammar).filter(i -> i.child instanceof RangeExpression).forEach(r -> {
             RangeExpression range = (RangeExpression) r.child;
             if (!(range.left instanceof KeywordExpression) || !(range.right instanceof KeywordExpression)) {
                 return;
