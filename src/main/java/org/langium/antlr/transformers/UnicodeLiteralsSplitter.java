@@ -33,8 +33,8 @@ public class UnicodeLiteralsSplitter implements Transformer {
 
     @Override
     public void transform(Grammar grammar ) {
-       Utilities.streamAst(grammar).filter(i -> i.child instanceof RangeExpression).forEach(r -> {
-            RangeExpression range = (RangeExpression) r.child;
+       Utilities.streamAst(grammar).filter(i -> i instanceof RangeExpression).forEach(r -> {
+            RangeExpression range = (RangeExpression) r;
             if (!(range.left instanceof KeywordExpression) || !(range.right instanceof KeywordExpression)) {
                 return;
             }
@@ -43,7 +43,7 @@ public class UnicodeLiteralsSplitter implements Transformer {
 
             if (UnicodePattern.test(left) && UnicodePattern.test(right)) {
                 var regex = new RegexRuleExpression("["+left+"-"+right+"]", "u");
-                Utilities.replace(r.parent, r.child, List.of(regex));
+                Utilities.replace(r, List.of(regex));
             }
         });
     }

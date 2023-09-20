@@ -6,7 +6,7 @@ import java.util.List;
 
 import org.langium.antlr.Utilities;
 
-public class Rule implements Printable, LangiumAST {
+public class Rule extends AbstractLangiumAST implements Printable {
     public final String name;
     public final RuleKind kind;
     public RuleExpression body;
@@ -79,23 +79,15 @@ public class Rule implements Printable, LangiumAST {
     }
 
     @Override
-    public int removeChild(LangiumAST child) {
-        throw new UnsupportedOperationException("Unimplemented method 'removeChild'");
-    }
-
-    @Override
-    public void insertChild(LangiumAST child, int index) {
-        throw new UnsupportedOperationException("Unimplemented method 'insertChild'");
-    }
-
-    @Override
     public int replaceChild(LangiumAST oldChild, LangiumAST newChild) {
         if(newChild instanceof RuleExpression) {
             if(oldChild == body) {
                 body = (RuleExpression) newChild;
+                oldChild.setParent(null);
+                newChild.setParent(this);
                 return 0;
             }
         }
-        throw new UnsupportedOperationException("Unimplemented method 'replaceChild'");
+        return super.replaceChild(oldChild, newChild);
     }
 }

@@ -23,24 +23,17 @@ public class QuantifierExpression extends RuleExpression {
         list.add(expression);
         return list;
     }
-    @Override
-    public int removeChild(LangiumAST child) {
-        throw new UnsupportedOperationException("Unimplemented method 'removeChild'");
-    }
-
-    @Override
-    public void insertChild(LangiumAST child, int index) {
-        throw new UnsupportedOperationException("Unimplemented method 'insertChild'");
-    }
 
     @Override
     public int replaceChild(LangiumAST oldChild, LangiumAST newChild) {
         if(newChild instanceof RuleExpression) {
             if(oldChild == expression) {
                 expression = (RuleExpression) newChild;
+                oldChild.setParent(null);
+                newChild.setParent(this);
                 return 0;
             }
         }
-        throw new UnsupportedOperationException("Unimplemented method 'replaceChild'");
+        return super.replaceChild(oldChild, newChild);
     }
 }

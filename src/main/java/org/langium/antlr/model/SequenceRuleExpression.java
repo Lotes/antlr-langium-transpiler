@@ -21,23 +21,29 @@ public class SequenceRuleExpression extends RuleExpression {
 
     @Override
     public List<LangiumAST> getChildren() {
-        return this.children.stream().map(i -> (LangiumAST)i).toList();
+        return this.children.stream().map(i -> (LangiumAST) i).toList();
     }
 
     @Override
     public int removeChild(LangiumAST child) {
         int index = children.indexOf(child);
         children.remove(child);
+        child.setParent(null);
         return index;
     }
+
     @Override
     public void insertChild(LangiumAST child, int index) {
-        children.add(index, (RuleExpression)child);
+        children.add(index, (RuleExpression) child);
+        child.setParent(this);
     }
+
     @Override
     public int replaceChild(LangiumAST oldChild, LangiumAST newChild) {
         int index = children.indexOf(oldChild);
-        children.set(index, (RuleExpression)newChild);
+        children.set(index, (RuleExpression) newChild);
+        oldChild.setParent(null);
+        newChild.setParent(this);
         return index;
     }
 }

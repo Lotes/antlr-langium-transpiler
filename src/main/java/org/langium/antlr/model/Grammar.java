@@ -3,7 +3,7 @@ package org.langium.antlr.model;
 import java.util.List;
 import java.util.stream.Stream;
 
-public class Grammar implements Printable, LangiumAST {
+public class Grammar extends AbstractLangiumAST implements Printable {
     public final String name;
     public final List<Rule> rules;
     public final RuleKind grammarKind;
@@ -69,10 +69,14 @@ public class Grammar implements Printable, LangiumAST {
         if(oldChild instanceof Rule) {
             var index = rules.indexOf(oldChild);
             rules.set(index, (Rule) newChild);
+            oldChild.setParent(null);
+            newChild.setParent(this);
             return index;
         } else {
             var index = imports.indexOf(oldChild);
             imports.set(index, (Grammar) newChild);
+            oldChild.setParent(null);
+            newChild.setParent(this);
             return index;
         }
     }

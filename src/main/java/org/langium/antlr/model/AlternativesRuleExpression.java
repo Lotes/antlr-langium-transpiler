@@ -37,6 +37,8 @@ public class AlternativesRuleExpression extends RuleExpression {
     public int replaceChild(LangiumAST oldChild, LangiumAST newChild) {
         int index = children.indexOf(oldChild);
         children.set(index, (RuleExpression)newChild);
+        oldChild.setParent(null);
+        newChild.setParent(this);
         return index;
     }
 }

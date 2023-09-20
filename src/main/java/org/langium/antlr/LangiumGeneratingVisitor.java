@@ -26,6 +26,7 @@ import org.langium.antlr.builder.RuleBuilder;
 import org.langium.antlr.model.AlternativesRuleExpression;
 import org.langium.antlr.model.Grammar;
 import org.langium.antlr.model.KeywordExpression;
+import org.langium.antlr.model.LangiumAST;
 import org.langium.antlr.model.NamingService;
 import org.langium.antlr.model.NamingServiceImpl;
 import org.langium.antlr.model.ParenthesesExpression;
@@ -42,7 +43,6 @@ import org.langium.antlr.transformers.Transformer;
 import org.langium.antlr.transformers.Transformers;
 
 public class LangiumGeneratingVisitor {
-
   private NamingService namingService;
   private Map<String, Grammar> grammarMap = new HashMap<String, Grammar>();
   private Map<String, String> errorMap = new HashMap<String, String>();
@@ -89,12 +89,20 @@ public class LangiumGeneratingVisitor {
           transformer.transform(grammar);
         }
       }
+      linkToParents(grammar, null);
       return grammar;
     } catch(Exception e) {
       errorMap.remove(name);
       errorMap.put(name, e.getMessage()+"\n"+tree);
       e.printStackTrace();
       throw e;
+    }
+  }
+
+  private void linkToParents(LangiumAST node, LangiumAST parent) {
+    node.setParent(parent);
+    for (LangiumAST child : node.getChildren()) {
+      linkToParents(child, node);
     }
   }
 

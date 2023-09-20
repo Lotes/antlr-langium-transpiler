@@ -3,7 +3,7 @@ package org.langium.antlr.model;
 import java.util.LinkedList;
 import java.util.List;
 
-public class ModeAction implements LangiumAST {
+public class ModeAction extends AbstractLangiumAST {
     public final ModeActionKind kind;
     public final String mode;
     public final String type;
@@ -29,17 +29,5 @@ public class ModeAction implements LangiumAST {
     @Override
     public List<LangiumAST> getChildren() {
         return new LinkedList<LangiumAST>();
-    }
-    @Override
-    public int removeChild(LangiumAST child) {
-        throw new UnsupportedOperationException("Unimplemented method 'removeChild'");
-    }
-    @Override
-    public void insertChild(LangiumAST child, int index) {
-        throw new UnsupportedOperationException("Unimplemented method 'insertChild'");
-    }
-    @Override
-    public int replaceChild(LangiumAST oldChild, LangiumAST newChild) {
-        throw new UnsupportedOperationException("Unimplemented method 'replaceChild'");
     }
 }

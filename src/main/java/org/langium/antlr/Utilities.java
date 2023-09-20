@@ -5,10 +5,10 @@ import java.util.List;
 import java.util.stream.Stream;
 
 import org.langium.antlr.model.LangiumAST;
-import org.langium.antlr.model.ParentChildPair;
 
 public class Utilities {
-    public static void replace(LangiumAST parent, LangiumAST child, List<LangiumAST> replacement) {
+    public static void replace(LangiumAST child, List<LangiumAST> replacement) {
+        LangiumAST parent = child.getParent();
         if (parent == null) {
             return;
         }
@@ -37,13 +37,8 @@ public class Utilities {
         return name.toUpperCase();
     }
 
-    public static Stream<ParentChildPair> streamAst(LangiumAST ast) {
-        return streamAst(ast, null);
-    }
-
-    private static Stream<ParentChildPair> streamAst(LangiumAST ast, LangiumAST parent) {
-        var root = new ParentChildPair(parent, ast);
-        var children =  ast.getChildren().size() > 0 ? ast.getChildren().stream().flatMap(c -> streamAst(c, ast)) : null;
+    public static Stream<LangiumAST> streamAst(LangiumAST root) {
+        var children =  root.getChildren().size() > 0 ? root.getChildren().stream().flatMap(c -> streamAst(c)) : null;
         if(children != null) {
             return Stream.concat(Stream.of(root), children);
         } else {
