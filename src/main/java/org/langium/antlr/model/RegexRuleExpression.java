@@ -19,7 +19,7 @@ public class RegexRuleExpression extends RuleExpression {
 
     @Override
     public String print(int indent) {
-        return "/"+pattern+"/"+flags != null ? flags : "";
+        return "/"+pattern+"/"+(flags != null ? flags : "");
     }
 
    @Override

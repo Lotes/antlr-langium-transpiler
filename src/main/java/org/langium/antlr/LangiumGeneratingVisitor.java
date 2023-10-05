@@ -24,11 +24,12 @@ import org.langium.antlr.builder.GrammarBuilder;
 import org.langium.antlr.builder.GrammarBuilderImpl;
 import org.langium.antlr.builder.RuleBuilder;
 import org.langium.antlr.model.AlternativesRuleExpression;
+import org.langium.antlr.model.EOFExpression;
 import org.langium.antlr.model.Grammar;
 import org.langium.antlr.model.KeywordExpression;
-import org.langium.antlr.model.LangiumAST;
 import org.langium.antlr.model.NamingService;
 import org.langium.antlr.model.NamingServiceImpl;
+import org.langium.antlr.model.NegationExpression;
 import org.langium.antlr.model.ParenthesesExpression;
 import org.langium.antlr.model.QuantifierExpression;
 import org.langium.antlr.model.QuantifierKind;
@@ -84,25 +85,18 @@ public class LangiumGeneratingVisitor {
     errorMap.put(name, tree);
     try {
       var grammar = readGrammarRoot(root);
+      Utilities.linkToParents(grammar, null);
       for (Transformer transformer : Transformers.createAll(namingService)) {
         if(transformer.canTransform(grammar)) {
           transformer.transform(grammar);
         }
       }
-      linkToParents(grammar, null);
       return grammar;
     } catch(Exception e) {
       errorMap.remove(name);
       errorMap.put(name, e.getMessage()+"\n"+tree);
       e.printStackTrace();
       throw e;
-    }
-  }
-
-  private void linkToParents(LangiumAST node, LangiumAST parent) {
-    node.setParent(parent);
-    for (LangiumAST child : node.getChildren()) {
-      linkToParents(child, node);
     }
   }
 
@@ -314,7 +308,7 @@ public class LangiumGeneratingVisitor {
         case "NotAST": {
           SetAST set = expectNamedChild(child, 0, "SET");
           String regex = expectChildName(set, 0);
-          return new RegexRuleExpression("("+regex+")");
+          return new NegationExpression(new RegexRuleExpression("("+regex+")"));
         }
         case "PredAST":
         case "ActionAST": {
@@ -334,7 +328,7 @@ public class LangiumGeneratingVisitor {
       return new KeywordExpression(text);
     }
     if (text.equals("EOF")) {
-      return null;
+      return EOFExpression.INSTANCE;
     }
     if (text.equals(".")) {
       return new RegexRuleExpression(text);

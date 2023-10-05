@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import org.langium.antlr.NameSplitter;
 import org.langium.antlr.Utilities;
 import org.langium.antlr.model.AlternativesRuleExpression;
 import org.langium.antlr.model.Grammar;
@@ -89,6 +90,7 @@ public class PropertyAssigner implements Transformer {
 
                 //assign names
                 for (RuleCallExpression ruleCall : ruleCalls) {
+                    System.out.println("assigning "+ruleCall.ruleName+" to "+variables.get(ruleCall.ruleName));
                     ruleCall.assignmentVariable = variables.get(ruleCall.ruleName);                    
                 }
             }

@@ -3,7 +3,6 @@ package org.langium.antlr;
 import static org.junit.Assert.assertArrayEquals;
 
 import org.junit.Test;
-import org.langium.antlr.transformers.NameSplitter;
 
 public class NameSplitterTest {
     private static final NameSplitter splitter = new NameSplitter();

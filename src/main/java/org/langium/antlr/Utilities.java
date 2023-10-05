@@ -2,11 +2,20 @@ package org.langium.antlr;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import org.langium.antlr.model.Grammar;
 import org.langium.antlr.model.LangiumAST;
 
 public class Utilities {
+    public static void linkToParents(LangiumAST node, LangiumAST parent) {
+        node.setParent(parent);
+        for (LangiumAST child : node.getChildren()) {
+            linkToParents(child, node);
+        }
+    }
+
     public static void replace(LangiumAST child, List<LangiumAST> replacement) {
         LangiumAST parent = child.getParent();
         if (parent == null) {
@@ -41,11 +50,19 @@ public class Utilities {
     }
 
     public static Stream<LangiumAST> streamAst(LangiumAST root) {
-        var children =  root.getChildren().size() > 0 ? root.getChildren().stream().flatMap(c -> streamAst(c)) : null;
+        var nonGrammars = root.getChildren().stream().filter(c -> !(c instanceof Grammar)).collect(Collectors.toList());
+        var children =  nonGrammars.size() > 0 ? nonGrammars.stream().flatMap(c -> streamAst(c)) : null;
         if(children != null) {
             return Stream.concat(Stream.of(root), children);
         } else {
             return Stream.of(root);
         }
+    }
+
+    public static LangiumAST getRoot(LangiumAST node) {
+        while(node.getParent() != null) {
+            node = node.getParent();
+        }
+        return node;
     }
 }

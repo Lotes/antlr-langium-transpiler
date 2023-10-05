@@ -14,6 +14,9 @@ public class AppTest
         File resourcesDirectory = new File("src/test/resources");
         File grammarsDirectory = new File(resourcesDirectory, "grammars");
         for (File grammarDirectory : grammarsDirectory.listFiles(f -> f.isDirectory())) {
+            if(!grammarDirectory.getAbsolutePath().contains("debug")) {
+               // continue;
+            }
             var entryFile = new File(grammarDirectory, "entry.txt");
             var entry = Files.readString(entryFile.toPath());
             File entryGrammar = new File(grammarDirectory, entry);

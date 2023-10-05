@@ -1,4 +1,4 @@
-package org.langium.antlr.transformers;
+package org.langium.antlr;
 
 import java.util.LinkedList;
 import java.util.regex.Matcher;
